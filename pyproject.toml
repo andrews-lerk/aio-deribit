@@ -1,0 +1,19 @@
+[project]
+name = "aio-deribit"
+version = "0.9.0"
+description = "Deribit asynchronous python client"
+authors = [
+    {name = "andrews-lerk", email = "lerk-inc@mail.ru"},
+]
+dependencies = [
+    "aiohttp>=3.9.3",
+    "certifi>=2024.2.2",
+    "adaptix>=3.0.0b4",
+    "websockets>=12.0",
+]
+requires-python = ">=3.12"
+readme = "README.md"
+license = {text = "MIT"}
+
+[tool.pdm]
+distribution = true
