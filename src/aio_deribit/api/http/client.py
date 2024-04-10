@@ -7,7 +7,7 @@ from typing import Any
 
 from aiohttp.typedefs import StrOrURL
 
-from aio_deribit.base_client import Client
+from aio_deribit.clients import HTTPClient
 from aio_deribit.types import AuthType
 from aio_deribit.exceptions import HTTPTimeoutError
 from aio_deribit.tools import now_utc
@@ -15,8 +15,8 @@ from aio_deribit.tools import now_utc
 Headers = dict[str, Any] | None
 
 
-class DeribitJRPCClient:
-    def __init__(self, client: Client, auth_type: AuthType = AuthType.HMAC) -> None:
+class HTTPDeribitJRPCClient:
+    def __init__(self, client: HTTPClient, auth_type: AuthType = AuthType.HMAC) -> None:
         """
         :param client: Base HTTP client
         :param auth_type: Specify authentication type to use, do not specify anything to use HMAC by default
@@ -73,7 +73,8 @@ class DeribitJRPCClient:
         if client_id and client_secret and self._auth_type.HMAC:
             return _hmac(url, client_id, client_secret)
         if client_id and client_secret and self._auth_type.BASIC:
-            return {"Authorization": f"Basic {base64.b64encode(client_id.encode()+b":"+client_secret.encode())}"}
+            credentials = base64.b64encode(client_id.encode()+b':'+client_secret.encode())
+            return {"Authorization": "Basic {}".format(str(credentials))}
         if access_token and self._auth_type.BEARER:
             return {"Authorization": f"bearer {access_token}"}
         return None
@@ -90,7 +91,7 @@ def _hmac(
     :param client_secret: Optional Client Secret if request is private
     :return Headers: Authorization header (deri-hmac-sha256)
     """
-    parsed_url = urlparse(url)
+    parsed_url = urlparse(str(url))
     uri = parsed_url.path + "?" + parsed_url.query if parsed_url.query else parsed_url.path
     ts, nonce = now_utc(), uuid4()
     signature = hmac.new(

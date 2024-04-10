@@ -3,7 +3,7 @@ class AioDeribitError(Exception):
 
 
 class HTTPBadResponseError(AioDeribitError):
-    def __init__(self, status_code: int, reason: str) -> None:
+    def __init__(self, status_code: int, reason: str | None = "unknown") -> None:
         self.status_code = status_code
         self.reason = reason
 

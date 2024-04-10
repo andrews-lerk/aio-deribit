@@ -6,12 +6,12 @@ import certifi
 from aiohttp import ClientSession, TCPConnector, ClientTimeout
 from aiohttp.typedefs import StrOrURL
 
-from .exceptions import HTTPBadResponseError
+from aio_deribit.exceptions import HTTPBadResponseError
 
 Headers = dict[str, Any] | None
 
 
-class Client:
+class HTTPClient:
     def __init__(
             self,
             session: ClientSession | None = None,
@@ -77,7 +77,7 @@ class Client:
             await self._session.close()
         await self._connector.close()
 
-    async def __aenter__(self) -> "Client":
+    async def __aenter__(self) -> "HTTPClient":
         return self
 
     async def __aexit__(

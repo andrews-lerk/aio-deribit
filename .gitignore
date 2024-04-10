@@ -160,3 +160,4 @@ cython_debug/
 .idea/
 
 # Local tests
+tests/local_tests/

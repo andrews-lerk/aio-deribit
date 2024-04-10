@@ -1,7 +1,7 @@
 [project]
 name = "aio-deribit"
 version = "0.9.0"
-description = "Deribit asynchronous python client"
+description = "Deribit asynchronous python client with WS and HTTP support"
 authors = [
     {name = "andrews-lerk", email = "lerk-inc@mail.ru"},
 ]
@@ -10,6 +10,7 @@ dependencies = [
     "certifi>=2024.2.2",
     "adaptix>=3.0.0b4",
     "websockets>=12.0",
+    "mypy>=1.9.0",
 ]
 requires-python = ">=3.12"
 readme = "README.md"
