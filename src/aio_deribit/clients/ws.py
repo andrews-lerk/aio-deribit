@@ -2,7 +2,8 @@ import asyncio
 import json
 from contextlib import asynccontextmanager
 import ssl
-from typing import Any, AsyncIterator
+from types import TracebackType
+from typing import Any, AsyncIterator, Type
 
 import certifi
 import websockets
@@ -16,18 +17,25 @@ class WSClient:
     def __init__(
             self,
             recv_timeout: int = 15,
+            max_queue: int = 10,
             open_timeout: int | None = 10,
             close_timeout: int | None = None
     ) -> None:
         """
         :param recv_timeout: Max server response time in seconds, default 15 seconds.
+        :param max_queue: Parameter sets the maximum length of the queue that
+            holds incoming messages.
+            Important parameter when use subscribe method in this class.
         :param open_timeout: Timeout for opening the connection in seconds, default 10 seconds.
         :param close_timeout: Parameter defines a maximum wait time for completing
-        the closing handshake and terminating the TCP connection, use None to disable limitation.
+            the closing handshake and terminating the TCP connection,
+            use None to disable limitation.
         :return None:
         """
         self._ssl_context = ssl.create_default_context(cafile=certifi.where())
+
         self._recv_timeout = recv_timeout
+        self._max_queue = max_queue
         self._open_timeout = open_timeout
         self._close_timeout = close_timeout
 
@@ -85,6 +93,7 @@ class WSClient:
             uri=uri,
             extra_headers=headers,
             open_timeout=self._open_timeout,
+            max_queue=self._max_queue,
             close_timeout=self._close_timeout,
             ssl=self._ssl_context
         )
@@ -108,4 +117,15 @@ class WSClient:
         """
         Close all WebSocket connections created by WSClient.
         """
-        await asyncio.wait(asyncio.create_task(self.close(ws)) for ws in self._ws_conn_pool)
+        await asyncio.gather(*[asyncio.create_task(self.close(ws)) for ws in self._ws_conn_pool])
+
+    async def __aenter__(self) -> "WSClient":
+        return self
+
+    async def __aexit__(
+            self,
+            exc_type: Type[BaseException] | None,
+            exc_val: BaseException | None,
+            exc_tb: TracebackType | None,
+    ) -> None:
+        await self.close_all()
