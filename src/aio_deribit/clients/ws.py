@@ -1,13 +1,21 @@
+from __future__ import annotations
 import asyncio
 import json
-from contextlib import asynccontextmanager
 import ssl
 from types import TracebackType
-from typing import Any, AsyncIterator, Type
+from typing import Any, Type
 
 import certifi
 import websockets
 from websockets import WebSocketClientProtocol
+from websockets.exceptions import InvalidHandshake, ConnectionClosed
+
+from aio_deribit.exceptions import (
+    WSOpenConnectionTimeoutError,
+    WSConnectionFailError,
+    WSConnectionClosedError,
+    WSRuntimeError
+)
 
 Message = dict[str, Any]
 Headers = dict[str, Any] | None
@@ -23,9 +31,7 @@ class WSClient:
     ) -> None:
         """
         :param recv_timeout: Max server response time in seconds, default 15 seconds.
-        :param max_queue: Parameter sets the maximum length of the queue that
-            holds incoming messages.
-            Important parameter when use subscribe method in this class.
+        :param max_queue: Parameter sets the maximum length of the queue that holds incoming messages.
         :param open_timeout: Timeout for opening the connection in seconds, default 10 seconds.
         :param close_timeout: Parameter defines a maximum wait time for completing
             the closing handshake and terminating the TCP connection,
@@ -34,7 +40,7 @@ class WSClient:
         """
         self._ssl_context = ssl.create_default_context(cafile=certifi.where())
 
-        self._recv_timeout = recv_timeout
+        self.recv_timeout = recv_timeout
         self._max_queue = max_queue
         self._open_timeout = open_timeout
         self._close_timeout = close_timeout
@@ -42,45 +48,7 @@ class WSClient:
         # active WebSocket connections storage
         self._ws_conn_pool: set[WebSocketClientProtocol] = set()
 
-    async def request(self, uri: str, msg: Message, headers: Headers = None) -> Any:
-        """
-        Opens a WebSocket connection one time and returns a message.
-
-        :param uri: URI for connect to the WebSocket server.
-        :param msg: Text for message sending.
-        :param headers: Arbitrary HTTP headers to add to the handshake request.
-        :return: Any data.
-        """
-
-        async with self._ws_connect(uri, headers) as websocket:
-            await websocket.send(json.dumps(msg))
-            async with asyncio.timeout(self._recv_timeout):
-                payload = await websocket.recv()
-        return payload
-
-    @asynccontextmanager
-    async def subscribe(
-            self, uri: str, msg: Message, headers: Headers = None
-    ) -> AsyncIterator[WebSocketClientProtocol]:
-        """
-        Send message and returns an active WebSocket connection through which you
-        can iterate asynchronously receiving incoming messages.
-
-        :param uri: URI for connect to the WebSocket server.
-        :param msg: Text for message sending.
-        :param headers: Arbitrary HTTP headers to add to the handshake request.
-        :return WebSocketClientProtocol: Support asynchronous iteration to receive incoming messages.
-        """
-
-        async with self._ws_connect(uri, headers) as websocket:
-            await websocket.send(json.dumps(msg))
-            try:
-                yield websocket
-            finally:
-                await self.close(websocket)
-
-    @asynccontextmanager
-    async def _ws_connect(self, uri: str, headers: Headers) -> AsyncIterator[WebSocketClientProtocol]:
+    async def ws_connect(self, uri: str, headers: Headers = None) -> WSConnection:
         """
         Setup and connect to the WebSocket server.
 
@@ -88,20 +56,22 @@ class WSClient:
         :param headers: Arbitrary HTTP headers to add to the handshake request.
         :return WebSocketClientProtocol:
         """
-
-        websocket = await websockets.connect(
-            uri=uri,
-            extra_headers=headers,
-            open_timeout=self._open_timeout,
-            max_queue=self._max_queue,
-            close_timeout=self._close_timeout,
-            ssl=self._ssl_context
-        )
-        self._ws_conn_pool.add(websocket)
         try:
-            yield websocket
-        finally:
-            await self.close(websocket)
+            websocket = await websockets.connect(
+                uri=uri,
+                extra_headers=headers,
+                open_timeout=self._open_timeout,
+                max_queue=self._max_queue,
+                close_timeout=self._close_timeout,
+                ssl=self._ssl_context
+            )
+        except TimeoutError as err:
+            raise WSOpenConnectionTimeoutError from err
+        except (OSError, InvalidHandshake) as err:
+            raise WSConnectionFailError from err
+
+        self._ws_conn_pool.add(websocket)
+        return WSConnection(self, websocket)
 
     async def close(self, websocket: WebSocketClientProtocol) -> None:
         """
@@ -129,3 +99,57 @@ class WSClient:
             exc_tb: TracebackType | None,
     ) -> None:
         await self.close_all()
+
+
+class WSConnection:
+    def __init__(self, ws_client: WSClient, websocket: WebSocketClientProtocol):
+        """
+        :param ws_client: WSClient that created the WebSocket connection.
+        :param websocket: WebSocketClientProtocol
+        :return None:
+        """
+        self._ws_client = ws_client
+        self._websocket = websocket
+
+    async def send(self, msg: Message) -> None:
+        """
+        Send a message.
+
+        :param msg: Text for message sending.
+        :return None:
+        """
+        try:
+            await self._websocket.send(json.dumps(msg))
+        except ConnectionClosed as err:
+            raise WSConnectionClosedError from err
+
+    async def recv(self) -> Any:
+        """
+        Receive the next message.
+
+        :return Any: Any data.
+        """
+        try:
+            payload = await self._websocket.recv()
+        except ConnectionClosed as err:
+            raise WSConnectionClosedError from err
+        except RuntimeError as err:
+            raise WSRuntimeError from err
+        return payload
+
+    @property
+    def open(self) -> bool:
+        """ True when the connection is open, False otherwise. """
+
+        return self._websocket.open
+
+    @property
+    def recv_timeout(self) -> int:
+        """ Return recv timeout setup by the WSClient. """
+
+        return self._ws_client.recv_timeout
+
+    async def close(self):
+        """ Close WebSocket connection.  """
+
+        await self._ws_client.close(self._websocket)

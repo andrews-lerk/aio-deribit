@@ -17,5 +17,21 @@ class MappingError(AioDeribitError):
     """ Raises when impossible to load or dump json data. """
 
 
+class WSConnectionClosedError(AioDeribitError):
+    """ Raised when trying to interact with a closed connection. """
+
+
+class WSConnectionFailError(AioDeribitError):
+    """ Raises when TCP connection fails or the opening handshake fails. """
+
+
+class WSRuntimeError(AioDeribitError):
+    """ If two coroutines call recv concurrently. """
+
+
+class WSOpenConnectionTimeoutError(AioDeribitError):
+    """ Raises when WS connection opening is too long. """
+
+
 class HTTPTimeoutError(AioDeribitError):
-    """ Raises when response waiting is too long. """
+    """ Raises when HTTP response waiting is too long. """
