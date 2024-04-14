@@ -5,8 +5,9 @@ from typing import Any, Type
 import certifi
 from aiohttp import ClientSession, TCPConnector, ClientTimeout
 from aiohttp.typedefs import StrOrURL
+from aiohttp.client_exceptions import ClientConnectorError
 
-from aio_deribit.exceptions import HTTPBadResponseError
+from aio_deribit.exceptions import HTTPBadResponseError, HTTPConnectionFailError
 
 Headers = dict[str, Any] | None
 
@@ -62,11 +63,14 @@ class HTTPClient:
         :param headers: Optional headers
         :return Any: JSON payload
         """
-        async with self._get_session().get(url, headers=headers) as response:
-            payload = await response.json()
-            if response.status >= self._bad_status:
-                raise HTTPBadResponseError(response.status, response.reason)
-        return payload
+        try:
+            async with self._get_session().get(url, headers=headers) as response:
+                payload = await response.json()
+                if response.status >= self._bad_status:
+                    raise HTTPBadResponseError(payload, response.status, response.reason)
+            return payload
+        except ClientConnectorError as err:
+            raise HTTPConnectionFailError from err
 
     async def close(self) -> None:
         """

@@ -14,7 +14,6 @@ class Response(Generic[TData]):
     """
 
     jsonrpc: str
-    id_: int
     testnet: bool
 
     result: TData
@@ -22,3 +21,4 @@ class Response(Generic[TData]):
     us_in: int
     us_out: int
     us_diff: int
+    id_: int | str | None = None

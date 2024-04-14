@@ -3,12 +3,12 @@ import asyncio
 import json
 import ssl
 from types import TracebackType
-from typing import Any, Type
+from typing import Any, Type, AsyncIterator
 
 import certifi
 import websockets
 from websockets import WebSocketClientProtocol
-from websockets.exceptions import InvalidHandshake, ConnectionClosed
+from websockets.exceptions import InvalidHandshake, ConnectionClosed, ConnectionClosedOK
 
 from aio_deribit.exceptions import (
     WSOpenConnectionTimeoutError,
@@ -137,19 +137,24 @@ class WSConnection:
             raise WSRuntimeError from err
         return payload
 
+    async def __aiter__(self) -> AsyncIterator[Any]:
+        """ Iterate on incoming messages. """
+        try:
+            while True:
+                yield await self.recv()
+        except ConnectionClosedOK:
+            return
+
     @property
     def open(self) -> bool:
         """ True when the connection is open, False otherwise. """
-
         return self._websocket.open
 
     @property
     def recv_timeout(self) -> int:
         """ Return recv timeout setup by the WSClient. """
-
         return self._ws_client.recv_timeout
 
     async def close(self):
-        """ Close WebSocket connection.  """
-
+        """ Close WebSocket connection. """
         await self._ws_client.close(self._websocket)

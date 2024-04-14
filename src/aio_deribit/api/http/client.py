@@ -9,7 +9,7 @@ from aiohttp.typedefs import StrOrURL
 
 from aio_deribit.clients import HTTPClient
 from aio_deribit.types import AuthType
-from aio_deribit.exceptions import HTTPTimeoutError
+from aio_deribit.exceptions import HTTPTimeoutError, HTTPBadResponseError, DeribitBadResponseError
 from aio_deribit.tools import now_utc
 
 Headers = dict[str, Any] | None
@@ -50,6 +50,13 @@ class HTTPDeribitJRPCClient:
 
         try:
             payload = await self._client.get(url, self._prepare_headers(url, client_id, client_secret, access_token))
+        except HTTPBadResponseError as err:
+            if err.payload.get("error"):
+                raise DeribitBadResponseError(
+                    error_payload=err.payload.get("error")
+                ) from err
+            else:
+                raise err
         except TimeoutError as err:
             raise HTTPTimeoutError from err
         return payload
@@ -70,13 +77,14 @@ class HTTPDeribitJRPCClient:
         :param access_token: Optional Access Token if request is private
         :return Headers: Optional headers if request is private
         """
+        headers = {"Content-Type": "application/json"}
         if client_id and client_secret and self._auth_type.HMAC:
-            return _hmac(url, client_id, client_secret)
+            headers.update(_hmac(url, client_id, client_secret))
         if client_id and client_secret and self._auth_type.BASIC:
             credentials = base64.b64encode(client_id.encode()+b':'+client_secret.encode())
-            return {"Authorization": "Basic {}".format(str(credentials))}
+            headers.update({"Authorization": "Basic {}".format(str(credentials))})
         if access_token and self._auth_type.BEARER:
-            return {"Authorization": f"bearer {access_token}"}
+            headers.update({"Authorization": f"bearer {access_token}"})
         return None
 
 
@@ -84,7 +92,7 @@ def _hmac(
         url: StrOrURL,
         client_id: str,
         client_secret: str,
-) -> Headers:
+) -> dict[str, str]:
     """
     :param url: URL to GET request
     :param client_id: Optional Client ID if request is private
