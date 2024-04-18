@@ -5,7 +5,7 @@ from aio_deribit.clients.ws import WSConnection, WSClient
 from .urls import WebsocketURI
 from aio_deribit.tools import Mapper
 from aio_deribit.api.retort import _RETORT
-from .methods import Authentication
+from .methods import Authentication, AccountManagement
 from aio_deribit.types import AuthType
 
 Headers = dict[str, Any] | None
@@ -23,6 +23,7 @@ class DeribitWS:
         self._mapper = Mapper(_RETORT)
 
         self.authentication = Authentication(websocket, auth_type, self._urls, self._mapper)
+        self.account_management = AccountManagement(websocket, auth_type, self._urls, self._mapper)
 
 
 class Connect:

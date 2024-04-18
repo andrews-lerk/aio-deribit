@@ -22,6 +22,7 @@ class Authentication(WSDeribitJRPCClient):
     async def auth(
             self,
             auth_type: AuthType,
+            *,
             client_id: str | None = None,
             client_secret: str | None = None,
             refresh_token: str | None = None,
@@ -56,18 +57,21 @@ class Authentication(WSDeribitJRPCClient):
                 https://docs.deribit.com/#access-scope for details.
         :return Response[Auth]: Auth model.
         """
-        msg = {"method": self._urls.auth, "params": {}}
+        method = self._urls.auth
+        params = {}
         if auth_type == AuthType.HMAC and client_id and client_secret:
-            params = _prepare_msg_params_with_signature(client_id, client_secret, **kwargs)
+            params.update(**kwargs)
+            payload = await self._request(method, params, client_id=client_id, client_secret=client_secret, id_=id_)
         elif auth_type == AuthType.BASIC and client_secret and client_secret:
-            params = {"grant_type": "client_credentials", "client_id": client_id, "client_secret": client_secret}
+            params.update(
+                {"grant_type": "client_credentials", "client_id": client_id, "client_secret": client_secret, **kwargs}
+            )
+            payload = await self._request(method, params, id_=id_)
         elif auth_type == AuthType.BEARER and refresh_token:
-            params = {"grant_type": "refresh_token", "refresh_token": refresh_token}
+            params = {"grant_type": "refresh_token", "refresh_token": refresh_token, **kwargs}
+            payload = await self._request(method, params, id_=id_)
         else:
             raise InvalidCredentialsError
-        msg["params"].update(params)
-        msg["params"].update(kwargs)
-        payload = await self._request(msg, id_)
         return self._mapper.load(payload, Response[Auth])
 
     async def exchange_token(self, refresh_token: str, subject_id: int, id_: int | None = None) -> Response[Auth]:
@@ -81,10 +85,9 @@ class Authentication(WSDeribitJRPCClient):
                    If it is included, then the response will contain the same identifier.
        :return  Response[Auth]: Auth model.
        """
-        msg = {
-            "method": self._urls.exchange_token, "params": {"refresh_token": refresh_token, "subject_id": subject_id}
-        }
-        payload = await self._request(msg, id_)
+        method = self._urls.exchange_token
+        params = {"refresh_token": refresh_token, "subject_id": subject_id}
+        payload = await self._request(method, params, id_)
         return self._mapper.load(payload, Response[Auth])
 
     async def fork_token(self, refresh_token: str, session_name: str, id_: int | None = None) -> Response[Auth]:
@@ -98,29 +101,7 @@ class Authentication(WSDeribitJRPCClient):
                    If it is included, then the response will contain the same identifier.
        :return: Response[Auth]: Auth model.
        """
-        msg = {
-            "method": self._urls.fork_token, "params": {"refresh_token": refresh_token, "session_name": session_name}
-        }
+        method = self._urls.fork_token
+        params = {"refresh_token": refresh_token, "session_name": session_name}
         payload = await self._request(msg, id_)
         return self._mapper.load(payload, Response[Auth])
-
-
-def _prepare_msg_params_with_signature(
-        client_id: str,
-        client_secret: str,
-        **kwargs: Any
-) -> dict[str, Any]:
-    timestamp, nonce = now_utc(), str(uuid4())
-    signature = hmac.new(
-        bytes(client_secret, "latin-1"),
-        msg=bytes('{}\n{}\n{}'.format(timestamp, nonce, kwargs.get("data", "")), "latin-1"),
-        digestmod=hashlib.sha256
-    ).hexdigest().lower()
-    msg = {
-        "grant_type": "client_signature",
-        "client_id": client_id,
-        "timestamp": timestamp,
-        "signature": signature,
-        "nonce": str(nonce),
-    }
-    return msg

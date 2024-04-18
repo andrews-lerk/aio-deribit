@@ -19,3 +19,7 @@ class URLs:
         self.hello = "public/hello"
         self.status = "public/status"
         self.test = "public/test"
+
+        # Account management - https://docs.deribit.com/?python#account-management
+        self.get_positions = "private/get_positions"
+

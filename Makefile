@@ -10,3 +10,11 @@ help:
 .PHONY: lint
 lint: ## Lint source code
 	$(py) mypy $(code_dir) || true
+
+.PHONY: install
+install: ## Install all depends
+	pdm install -G:all
+
+.PHONY: update
+update: ## Update all depends
+	pdm update --update-all
