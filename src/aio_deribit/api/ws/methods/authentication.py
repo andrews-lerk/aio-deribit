@@ -1,3 +1,4 @@
+import logging
 import hashlib
 import hmac
 from typing import Any
@@ -6,15 +7,17 @@ from uuid import uuid4
 from aio_deribit import WSConnection
 from aio_deribit.api.ws.client import WSDeribitJRPCClient
 from aio_deribit.api.ws.urls import WebsocketURI
-from aio_deribit.exceptions import InvalidCredentialsError
+from aio_deribit.exceptions import InvalidCredentialsError, WSConnectionClosedError
 from aio_deribit.tools import Mapper, now_utc
 from aio_deribit.types import AuthType
 from aio_deribit.api.responses import (Response, Auth)
 
+logger = logging.getLogger(__name__)
+
 
 class Authentication(WSDeribitJRPCClient):
-    def __init__(self, websocket: WSConnection, auth_type: AuthType, urls: WebsocketURI, mapper: Mapper) -> None:
-        super().__init__(websocket, auth_type)
+    def __init__(self, websocket: WSConnection, urls: WebsocketURI, mapper: Mapper) -> None:
+        super().__init__(websocket)
 
         self._urls = urls
         self._mapper = mapper
@@ -46,7 +49,7 @@ class Authentication(WSDeribitJRPCClient):
         :param refresh_token: Optional refresh token, use if AuthType BEARER.
         :param id_: An optional identifier of the request.
                     If it is included, then the response will contain the same identifier.
-        :param kwargs: Parameters for add to query string.
+        :param kwargs: Parameters for add to JSON message.
             ``data``
                 Contains any user specific value.
 
@@ -58,23 +61,20 @@ class Authentication(WSDeribitJRPCClient):
         :return Response[Auth]: Auth model.
         """
         method = self._urls.auth
-        params = {}
         if auth_type == AuthType.HMAC and client_id and client_secret:
-            params.update(**kwargs)
-            payload = await self._request(method, params, client_id=client_id, client_secret=client_secret, id_=id_)
+            params = _prepare_msg_params_with_signature(client_id, client_secret, **kwargs)
         elif auth_type == AuthType.BASIC and client_secret and client_secret:
-            params.update(
-                {"grant_type": "client_credentials", "client_id": client_id, "client_secret": client_secret, **kwargs}
-            )
-            payload = await self._request(method, params, id_=id_)
+            params = {
+                "grant_type": "client_credentials", "client_id": client_id, "client_secret": client_secret, **kwargs
+            }
         elif auth_type == AuthType.BEARER and refresh_token:
             params = {"grant_type": "refresh_token", "refresh_token": refresh_token, **kwargs}
-            payload = await self._request(method, params, id_=id_)
         else:
             raise InvalidCredentialsError
+        payload = await self._request(method, params, id_=id_)
         return self._mapper.load(payload, Response[Auth])
 
-    async def exchange_token(self, refresh_token: str, subject_id: int, id_: int | None = None) -> Response[Auth]:
+    async def exchange_token(self, refresh_token: str, subject_id: int, *, id_: int | None = None) -> Response[Auth]:
         """
        https://docs.deribit.com/?shell#public-exchange_token
 
@@ -90,7 +90,7 @@ class Authentication(WSDeribitJRPCClient):
         payload = await self._request(method, params, id_)
         return self._mapper.load(payload, Response[Auth])
 
-    async def fork_token(self, refresh_token: str, session_name: str, id_: int | None = None) -> Response[Auth]:
+    async def fork_token(self, refresh_token: str, session_name: str, *, id_: int | None = None) -> Response[Auth]:
         """
        https://docs.deribit.com/?shell#public-fork_token
 
@@ -103,5 +103,47 @@ class Authentication(WSDeribitJRPCClient):
        """
         method = self._urls.fork_token
         params = {"refresh_token": refresh_token, "session_name": session_name}
-        payload = await self._request(msg, id_)
+        payload = await self._request(method, params, id_)
         return self._mapper.load(payload, Response[Auth])
+
+    async def logout(self, *, access_token: str | None = None, **kwargs: Any) -> None:
+        """
+        https://docs.deribit.com/#private-logout
+
+        Gracefully close websocket connection,
+        when COD (Cancel On Disconnect) is enabled orders are not cancelled.
+        :param access_token: Optional access token.
+        :param kwargs: Parameters for add to JSON message.
+            ``invalidate_token``
+                If value is true all tokens created in current session are invalidated, default: true
+        :return:
+        """
+
+        method = self._urls.logout
+        params = {**kwargs}
+        try:
+            await self._request(method, params, access_token, id_=None)
+        except WSConnectionClosedError:
+            logger.info("Websocket connection closed.")
+
+
+def _prepare_msg_params_with_signature(
+        client_id: str,
+        client_secret: str,
+        **kwargs: Any
+) -> dict[str, Any]:
+    timestamp, nonce = now_utc(), str(uuid4())
+    signature = (hmac.new(
+        bytes(client_secret, "latin-1"),
+        msg=bytes('{}\n{}\n{}'.format(timestamp, nonce, kwargs.get("data", "")), "latin-1"),
+        digestmod=hashlib.sha256
+    ).hexdigest().lower())
+    msg = {
+        "grant_type": "client_signature",
+        "client_id": client_id,
+        "timestamp": timestamp,
+        "signature": signature,
+        "nonce": nonce,
+        **kwargs
+    }
+    return msg
