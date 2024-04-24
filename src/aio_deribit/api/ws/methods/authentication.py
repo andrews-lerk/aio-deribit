@@ -15,10 +15,10 @@ from aio_deribit.api.responses import (Response, Auth)
 logger = logging.getLogger(__name__)
 
 
-class Authentication(WSDeribitJRPCClient):
-    def __init__(self, websocket: WSConnection, urls: WebsocketURI, mapper: Mapper) -> None:
-        super().__init__(websocket)
+class Authentication:
+    def __init__(self, client: WSDeribitJRPCClient, urls: WebsocketURI, mapper: Mapper) -> None:
 
+        self._client = client
         self._urls = urls
         self._mapper = mapper
 
@@ -71,7 +71,7 @@ class Authentication(WSDeribitJRPCClient):
             params = {"grant_type": "refresh_token", "refresh_token": refresh_token, **kwargs}
         else:
             raise InvalidCredentialsError
-        payload = await self._request(method, params, id_=id_)
+        payload = await self._client.request(method, params, id_=id_)
         return self._mapper.load(payload, Response[Auth])
 
     async def exchange_token(self, refresh_token: str, subject_id: int, *, id_: int | None = None) -> Response[Auth]:
@@ -87,7 +87,7 @@ class Authentication(WSDeribitJRPCClient):
        """
         method = self._urls.exchange_token
         params = {"refresh_token": refresh_token, "subject_id": subject_id}
-        payload = await self._request(method, params, id_)
+        payload = await self._client.request(method, params, id_)
         return self._mapper.load(payload, Response[Auth])
 
     async def fork_token(self, refresh_token: str, session_name: str, *, id_: int | None = None) -> Response[Auth]:
@@ -103,7 +103,7 @@ class Authentication(WSDeribitJRPCClient):
        """
         method = self._urls.fork_token
         params = {"refresh_token": refresh_token, "session_name": session_name}
-        payload = await self._request(method, params, id_)
+        payload = await self._client.request(method, params, id_)
         return self._mapper.load(payload, Response[Auth])
 
     async def logout(self, *, access_token: str | None = None, **kwargs: Any) -> None:
@@ -122,7 +122,7 @@ class Authentication(WSDeribitJRPCClient):
         method = self._urls.logout
         params = {**kwargs}
         try:
-            await self._request(method, params, access_token, id_=None)
+            await self._client.request(method, params, access_token, id_=None)
         except WSConnectionClosedError:
             logger.info("Websocket connection closed.")
 

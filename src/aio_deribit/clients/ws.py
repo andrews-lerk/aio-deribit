@@ -8,7 +8,7 @@ from typing import Any, Type, AsyncIterator
 import certifi
 import websockets
 from websockets import WebSocketClientProtocol
-from websockets.exceptions import InvalidHandshake, ConnectionClosed, ConnectionClosedOK
+from websockets.exceptions import InvalidHandshake, ConnectionClosedError, ConnectionClosedOK
 
 from aio_deribit.exceptions import (
     WSOpenConnectionTimeoutError,
@@ -120,7 +120,7 @@ class WSConnection:
         """
         try:
             await self._websocket.send(json.dumps(msg))
-        except ConnectionClosed as err:
+        except ConnectionClosedError as err:
             raise WSConnectionClosedError from err
 
     async def recv(self) -> Any:
@@ -131,7 +131,7 @@ class WSConnection:
         """
         try:
             payload = await self._websocket.recv()
-        except ConnectionClosed as err:
+        except ConnectionClosedError as err:
             raise WSConnectionClosedError from err
         except RuntimeError as err:
             raise WSRuntimeError from err

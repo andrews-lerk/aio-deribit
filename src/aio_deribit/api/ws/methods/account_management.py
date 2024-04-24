@@ -5,10 +5,10 @@ from aio_deribit.tools import Mapper
 from aio_deribit.types import AuthType
 
 
-class AccountManagement(WSDeribitJRPCClient):
-    def __init__(self, websocket: WSConnection, urls: WebsocketURI, mapper: Mapper) -> None:
-        super().__init__(websocket)
+class AccountManagement:
+    def __init__(self, client: WSDeribitJRPCClient, urls: WebsocketURI, mapper: Mapper) -> None:
 
+        self._client = client
         self._urls = urls
         self._mapper = mapper
 
@@ -19,4 +19,4 @@ class AccountManagement(WSDeribitJRPCClient):
     ) -> None:
         method = self._urls.get_positions
         params = {"currency": currency}
-        print(await self._request(method, params, access_token=access_token))
+        print(await self._client.request(method, params, access_token=access_token))

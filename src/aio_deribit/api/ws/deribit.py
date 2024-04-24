@@ -3,6 +3,7 @@ from typing import Generator, Any, Type
 
 from aio_deribit.clients.ws import WSConnection, WSClient
 from .urls import WebsocketURI
+from .client import WSDeribitJRPCClient
 from aio_deribit.tools import Mapper
 from aio_deribit.api.retort import _RETORT
 from .methods import Authentication, SessionManagement, AccountManagement
@@ -17,14 +18,15 @@ class DeribitWS:
             websocket: WSConnection,
             testnet: bool = False
     ) -> None:
+
+        self._client = WSDeribitJRPCClient(websocket)
         self._urls = WebsocketURI(testnet)
         self._mapper = Mapper(_RETORT)
 
-        self.ws = websocket
-
-        self.authentication = Authentication(websocket, self._urls, self._mapper)
-        self.session_management = SessionManagement(websocket, self._urls, self._mapper)
-        self.account_management = AccountManagement(websocket, self._urls, self._mapper)
+        # API
+        self.authentication = Authentication(self._client, self._urls, self._mapper)
+        self.session_management = SessionManagement(self._client, self._urls, self._mapper)
+        self.account_management = AccountManagement(self._client, self._urls, self._mapper)
 
 
 class Connect:
