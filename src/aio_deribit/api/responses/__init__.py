@@ -1,3 +1,5 @@
+"""Package provides all Response models for Deribit API methods."""
+
 from .base import Response
 from .models.authentication import Auth
 

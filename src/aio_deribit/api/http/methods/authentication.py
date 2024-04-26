@@ -11,9 +11,19 @@ from aio_deribit.exceptions import InvalidCredentialsError
 from aio_deribit.tools import Mapper, now_utc, query_builder
 from aio_deribit.types import AuthType
 
+QueryParams = dict[str, Any]
+
 
 class Authentication(HTTPDeribitJRPCClient):
     def __init__(self, client: HTTPClient, auth_type: AuthType, urls: HttpURL, mapper: Mapper) -> None:
+        """Class provides Authentication methods for Deribit.
+
+        :param client: HTTP Client.
+        :param auth_type: Authentication type.
+        :param urls: HTTP URLs.
+        :param mapper: Mapper for responses unpack.
+        :return None:
+        """
         super().__init__(client, auth_type)
         self._urls = urls
         self._mapper = mapper
@@ -24,9 +34,9 @@ class Authentication(HTTPDeribitJRPCClient):
         client_id: str | None = None,
         client_secret: str | None = None,
         refresh_token: str | None = None,
-        **kwargs: Any,
+        **kwargs: QueryParams,
     ) -> Response[Auth]:
-        """https://docs.deribit.com/#public-auth
+        """https://docs.deribit.com/#public-auth .
 
         Specify auth type parameter by grand type:
 
@@ -69,7 +79,7 @@ class Authentication(HTTPDeribitJRPCClient):
         raise InvalidCredentialsError
 
     async def exchange_token(self, refresh_token: str, subject_id: int) -> Response[Auth]:
-        """https://docs.deribit.com/?shell#public-exchange_token
+        """https://docs.deribit.com/?shell#public-exchange_token .
 
         Generates a token for a new subject id. This method can be used to switch between subaccounts.
         :param refresh_token: Refresh token
@@ -82,7 +92,7 @@ class Authentication(HTTPDeribitJRPCClient):
         return self._mapper.load(payload, Response[Auth])
 
     async def fork_token(self, refresh_token: str, session_name: str) -> Response[Auth]:
-        """https://docs.deribit.com/?shell#public-fork_token
+        """https://docs.deribit.com/?shell#public-fork_token .
 
         Generates a token for a new named session. This method can be used only with session scoped tokens.
         :param refresh_token: Refresh token.
@@ -99,7 +109,7 @@ def _prepare_url_with_signature(
     url: str,
     client_id: str,
     client_secret: str,
-    **kwargs: Any,
+    **kwargs: QueryParams,
 ) -> str:
     timestamp, nonce = now_utc(), uuid4()
     signature = (
@@ -111,14 +121,11 @@ def _prepare_url_with_signature(
         .hexdigest()
         .lower()
     )
-    url = (
+    return (
         url
         + (
             f"?grant_type=client_signature"
             f"&client_id={client_id}&timestamp={timestamp}&nonce={nonce}&signature={signature}"
         )
-        + query_builder(
-            **kwargs,
-        )
+        + query_builder(**kwargs)
     )
-    return url

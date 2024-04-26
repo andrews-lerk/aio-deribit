@@ -13,11 +13,14 @@ from aio_deribit.tools import now_utc
 from aio_deribit.types import AuthType
 
 Headers = dict[str, Any] | None
+Payload = Any
 
 
 class HTTPDeribitJRPCClient:
     def __init__(self, client: HTTPClient, auth_type: AuthType = AuthType.HMAC) -> None:
-        """:param client: Base HTTP client
+        """Class provides HTTP JRPC Client for Deribit.
+
+        :param client: Base HTTP client
         :param auth_type: Specify authentication type to use, do not specify anything to use HMAC by default
         :return None:
         """
@@ -30,7 +33,7 @@ class HTTPDeribitJRPCClient:
         client_id: str | None = None,
         client_secret: str | None = None,
         access_token: str | None = None,
-    ) -> Any:
+    ) -> Payload:
         """GET request.
 
         If HMAC (Deribit signature credentials) or BASIC (Basic user credentials) methods are used:
@@ -52,7 +55,7 @@ class HTTPDeribitJRPCClient:
                 raise DeribitBadResponseError(
                     error_payload=err.payload.get("error"),
                 ) from err
-            raise err
+            raise
         except TimeoutError as err:
             raise HTTPTimeoutError from err
         return payload
@@ -64,7 +67,7 @@ class HTTPDeribitJRPCClient:
         client_secret: str | None = None,
         access_token: str | None = None,
     ) -> Headers:
-        """Define needed auth method and return headers
+        """Define needed auth method and return headers.
 
         :param url: URL to GET request
         :param client_id: Optional Client ID if request is private
@@ -88,7 +91,9 @@ def _hmac(
     client_id: str,
     client_secret: str,
 ) -> dict[str, str]:
-    """:param url: URL to GET request
+    """Create HMAC authorization header for HTTP request.
+
+    :param url: URL to GET request
     :param client_id: Optional Client ID if request is private
     :param client_secret: Optional Client Secret if request is private
     :return Headers: Authorization header (deri-hmac-sha256)

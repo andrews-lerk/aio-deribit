@@ -1,9 +1,10 @@
 class URLs:
     def __init__(self) -> None:
+        """Class store all methods available on Deribit API."""
         # Authentication - https://docs.deribit.com/?shell#authentication-2
         self.auth = "public/auth"
-        self.exchange_token = "public/exchange_token"
-        self.fork_token = "public/fork_token"
+        self.exchange_token = "public/exchange_token"  # noqa: S105
+        self.fork_token = "public/fork_token"  # noqa: S105
         self.logout = "private/logout"
 
         # Session management - https://docs.deribit.com/#session-management

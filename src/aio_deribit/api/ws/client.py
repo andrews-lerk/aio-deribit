@@ -9,11 +9,14 @@ from aio_deribit.exceptions import DeribitBadResponseError, WSConnectionClosedEr
 from .events import EventBus
 
 Message = dict[str, Any]
+Payload = Any
 
 
 class WSDeribitJRPCClient:
     def __init__(self, websocket: WSConnection) -> None:
-        """:param websocket: Active WS connection
+        """Class provides WS JRPC Client for Deribit.
+
+        :param websocket: Active WS connection
         :return None:
         """
         self._websocket = websocket
@@ -29,7 +32,7 @@ class WSDeribitJRPCClient:
         method: str,
         params: dict[str, Any],
         access_token: str | None = None,
-    ) -> Any:
+    ) -> Payload:
         """Send message and receive data one time with defined timeout.
 
         :param access_token:
@@ -56,6 +59,11 @@ class WSDeribitJRPCClient:
         return payload
 
     async def start_listening(self) -> None:
+        """Start websocket listening task.
+
+        This method create asyncio Task that working on background
+        and recv incoming messages.
+        """
         if not self.__listening_task.done():
             await asyncio.sleep(0)
             return
@@ -63,6 +71,7 @@ class WSDeribitJRPCClient:
         await asyncio.sleep(0)
 
     def stop_listening(self) -> None:
+        """Stop websocket listening task."""
         if self.__listening_task.done():
             return
         self.__listening_task.cancel()
