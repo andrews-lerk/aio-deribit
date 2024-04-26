@@ -22,16 +22,36 @@ SOFTWARE.
 
 This software uses the following external libraries:
 
-* websockets:
-    Copyright Aymeric Augustin and contributors.
-    Licensed under BSD-3-Clause license.
-    Website: https://websockets.readthedocs.io
+    * websockets:
+        Copyright Aymeric Augustin and contributors.
+        Licensed under BSD-3-Clause license.
+        Website: https://websockets.readthedocs.io
 
-* aiohttp:
-    Copyright aio-libs contributors.
-    Licensed under the Apache License, Version 2.0.
-    Website: https://docs.aiohttp.org
+    * aiohttp:
+        Copyright aio-libs contributors.
+        Licensed under the Apache License, Version 2.0.
+        Website: https://docs.aiohttp.org
 
-* adaptix:
-    Licensed under the Apache License, Version 2.0.
-    Website: https://adaptix.readthedocs.io
+    * ruff:
+        Copyright (c) 2022 Charles Marsh.
+        Licensed under MIT License.
+        Website: https://docs.astral.sh
+
+    * mypy:
+        Copyright (c) 2012-2023 Jukka Lehtosalo and contributors.
+        Copyright (c) 2015-2023 Dropbox, Inc.
+        Licensed under MIT License.
+        Website: https://www.mypy-lang.org
+
+    * pre-commit:
+        Copyright (c) 2014 pre-commit dev team: Anthony Sottile, Ken Struys.
+        Licensed under MIT License.
+        Website: https://pre-commit.com
+
+    * adaptix:
+        Licensed under the Apache License, Version 2.0.
+        Website: https://adaptix.readthedocs.io
+
+    * certifi:
+        Licensed under the Mozilla Public License, Version 2.0.
+        GitHub repository: https://github.com/certifi/python-certifi
