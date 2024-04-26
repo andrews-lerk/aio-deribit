@@ -1,13 +1,14 @@
+from uuid import uuid4
 import asyncio
 import copy
 import json
 from typing import Any, AsyncIterator
 
 from aio_deribit.clients.ws import WSConnection
-from aio_deribit.exceptions import WSRecvTimeoutError, DeribitBadResponseError
+from aio_deribit.exceptions import WSRecvTimeoutError, DeribitBadResponseError, WSConnectionClosedError
 from .events import EventBus
 
-Message = Params = dict[str, Any]
+Message = dict[str, Any]
 
 
 class WSDeribitJRPCClient:
@@ -25,66 +26,66 @@ class WSDeribitJRPCClient:
         self._base_msg = {"jsonrpc": "2.0", "id": -0, "method": "", "params": {}}
 
     async def request(
-            self, method: str, params: Params, access_token: str | None = None, id_: int | None = None
+            self, method: str, params: dict[str, Any], access_token: str | None = None
     ) -> Any:
         """
         Send message and receive data one time with defined timeout.
 
-        :param id_:
         :param access_token:
         :param params:
         :param method: Message for sending.
         :return Any: Any data.
         """
-        msg = self._prepare_msg(method, params, access_token, id_)
-        await self._websocket.send(msg)
+        id_ = str(uuid4())
+        msg = self._prepare_msg(method, params, id_, access_token)
         try:
-            async with asyncio.timeout(self._websocket.recv_timeout):
-                payload = json.loads(await self._websocket.recv())
-            if payload.get("error"):
-                raise DeribitBadResponseError(error_payload=payload.get("error"))
+            async with self._events.new_listener() as listener:
+                await self._websocket.send(msg)
+                async with asyncio.timeout(self._websocket.recv_timeout):
+                    while self._websocket.open:
+                        payload = json.loads(await listener.get_result())
+                        if payload.get("id") == id_:
+                            if payload.get("error"):
+                                raise DeribitBadResponseError(error_payload=payload.get("error"))
+                            break
+                        if payload.get("aio-deribit") == "stop broadcasting":
+                            raise WSConnectionClosedError
         except TimeoutError as err:
             raise WSRecvTimeoutError from err
         return payload
 
-    async def _subscribe(self, msg: Message) -> AsyncIterator[Any]:
-        """
-        Send message and iterating on incoming messages.
-
-        :param msg: Message for sending.
-        :return AsyncIterator: For iterating on incoming messages.
-        """
-        await self._websocket.send(msg)
-        async for response in self._websocket:
-            yield response
-
-    def start_listening(self):
+    async def start_listening(self) -> None:
         if not self.__listening_task.done():
+            await asyncio.sleep(0)
             return None
         self.__listening_task = self._start_listening()
+        await asyncio.sleep(0)
 
-    def _start_listening(self) -> asyncio.Task:
-        task = asyncio.create_task(self.__listen(), name="aio-deribit WS listening task")
+    def stop_listening(self) -> None:
+        if self.__listening_task.done():
+            return None
+        self.__listening_task.cancel()
+
+    def _start_listening(self) -> asyncio.Task[None]:
+        task = asyncio.get_running_loop().create_task(self.__listen(), name="aio-deribit WS listening task")
         return task
 
     async def __listen(self) -> None:
         try:
             async for msg in self._websocket:
-                self._events.emit(msg)
+                await self._events.emit(msg)
         except asyncio.CancelledError:
             return None
+        finally:
+            await self._events.clear()
         return None
 
     def _prepare_msg(
-            self, method: str, params: Params, access_token: str | None = None, id_: int | None = None
+            self, method: str, params: dict[str, Any], id_: str, access_token: str | None = None
     ) -> Message:
         msg = copy.deepcopy(self._base_msg)
-        msg.update({"method": method})
+        msg.update({"method": method, "id": id_})
         if access_token:
             params.update({'access_token': access_token})
         msg.update({"params": params})
-        if id_:
-            msg.update({"id": str(id_)})
-        else:
-            msg.pop("id")
         return msg

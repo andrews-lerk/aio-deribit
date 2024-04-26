@@ -29,7 +29,6 @@ class Authentication:
             client_id: str | None = None,
             client_secret: str | None = None,
             refresh_token: str | None = None,
-            id_: int | None = None,
             **kwargs: Any
     ) -> Response[Auth]:
         """
@@ -47,8 +46,6 @@ class Authentication:
         :param client_id: Optional client id, use if AuthType BASIC or AuthType HMAC.
         :param client_secret: Optional client secret, use if AuthType BASIC or AuthType HMAC.
         :param refresh_token: Optional refresh token, use if AuthType BEARER.
-        :param id_: An optional identifier of the request.
-                    If it is included, then the response will contain the same identifier.
         :param kwargs: Parameters for add to JSON message.
             ``data``
                 Contains any user specific value.
@@ -71,39 +68,35 @@ class Authentication:
             params = {"grant_type": "refresh_token", "refresh_token": refresh_token, **kwargs}
         else:
             raise InvalidCredentialsError
-        payload = await self._client.request(method, params, id_=id_)
+        payload = await self._client.request(method, params)
         return self._mapper.load(payload, Response[Auth])
 
-    async def exchange_token(self, refresh_token: str, subject_id: int, *, id_: int | None = None) -> Response[Auth]:
+    async def exchange_token(self, refresh_token: str, subject_id: int) -> Response[Auth]:
         """
        https://docs.deribit.com/?shell#public-exchange_token
 
        Generates a token for a new subject id. This method can be used to switch between subaccounts.
        :param refresh_token: Refresh token
        :param subject_id: New subject id
-       :param id_: An optional identifier of the request.
-                   If it is included, then the response will contain the same identifier.
        :return  Response[Auth]: Auth model.
        """
         method = self._urls.exchange_token
         params = {"refresh_token": refresh_token, "subject_id": subject_id}
-        payload = await self._client.request(method, params, id_)
+        payload = await self._client.request(method, params)
         return self._mapper.load(payload, Response[Auth])
 
-    async def fork_token(self, refresh_token: str, session_name: str, *, id_: int | None = None) -> Response[Auth]:
+    async def fork_token(self, refresh_token: str, session_name: str) -> Response[Auth]:
         """
        https://docs.deribit.com/?shell#public-fork_token
 
        Generates a token for a new named session. This method can be used only with session scoped tokens.
        :param refresh_token: Refresh token.
        :param session_name: New session name.
-       :param id_: An optional identifier of the request.
-                   If it is included, then the response will contain the same identifier.
        :return: Response[Auth]: Auth model.
        """
         method = self._urls.fork_token
         params = {"refresh_token": refresh_token, "session_name": session_name}
-        payload = await self._client.request(method, params, id_)
+        payload = await self._client.request(method, params)
         return self._mapper.load(payload, Response[Auth])
 
     async def logout(self, *, access_token: str | None = None, **kwargs: Any) -> None:
@@ -122,7 +115,7 @@ class Authentication:
         method = self._urls.logout
         params = {**kwargs}
         try:
-            await self._client.request(method, params, access_token, id_=None)
+            await self._client.request(method, params, access_token)
         except WSConnectionClosedError:
             logger.info("Websocket connection closed.")
 

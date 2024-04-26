@@ -1,5 +1,8 @@
-from queue import SimpleQueue
-from typing import Any
+from __future__ import annotations
+
+import asyncio
+import json
+from typing import Any, AsyncIterator
 from contextlib import asynccontextmanager
 
 
@@ -8,7 +11,7 @@ class EventBus:
         self._listeners: set[MessagesQueue] = set()
 
     @asynccontextmanager
-    async def new_listener(self):
+    async def new_listener(self) -> AsyncIterator[MessagesQueue]:
         """ Connect to listening for incoming messages. """
 
         event = MessagesQueue()
@@ -18,23 +21,32 @@ class EventBus:
         finally:
             self._listeners.remove(event)
 
-    def emit(self, msg: Any) -> None:
+    async def emit(self, msg: Any) -> None:
         """ Emit message to all listeners. """
 
-        for listener in self._listeners:
-            listener.add_result(msg)
+        await asyncio.gather(*[listener.add_result(msg) for listener in self._listeners])
+
+    async def clear(self) -> None:
+        """ Indicate to all listeners that broadcasting messages. """
+
+        await asyncio.gather(*[listener.close() for listener in self._listeners])
 
 
 class MessagesQueue:
     def __init__(self) -> None:
-        self.__msg_queue = SimpleQueue()
+        self.__msg_queue: asyncio.Queue = asyncio.Queue()
 
-    def get_result(self) -> Any:
+    async def get_result(self) -> Any:
         """ Get result from a queue. """
 
-        return self.__msg_queue.get(block=True)
+        return await self.__msg_queue.get()
 
-    def add_result(self, msg: Any) -> None:
+    async def add_result(self, msg: Any) -> None:
         """ Put result to a queue. """
 
-        self.__msg_queue.put(msg)
+        await self.__msg_queue.put(msg)
+
+    async def close(self) -> None:
+        """ Indicate about stop broadcasting messages. """
+
+        await self.__msg_queue.put(json.dumps({"aio-deribit": "stop broadcasting"}))
