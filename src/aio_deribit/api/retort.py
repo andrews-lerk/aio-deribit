@@ -1,4 +1,4 @@
-from adaptix import name_mapping, NameStyle, Retort
+from adaptix import NameStyle, Retort, name_mapping
 
 from aio_deribit.api.responses.base import Response
 

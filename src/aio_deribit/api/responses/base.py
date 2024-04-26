@@ -1,13 +1,12 @@
 from dataclasses import dataclass
-from typing import TypeVar, Generic
+from typing import Generic, TypeVar
 
 TData = TypeVar("TData")
 
 
 @dataclass
 class Response(Generic[TData]):
-    """
-    The Deribit JSON-RPC API always responds with a JSON object with the following fields.
+    """The Deribit JSON-RPC API always responds with a JSON object with the following fields.
     Exclude error field from this model.
 
     https://docs.deribit.com/#response-messages

@@ -1,11 +1,11 @@
 import ssl
 from types import TracebackType
-from typing import Any, Type
+from typing import Any
 
 import certifi
-from aiohttp import ClientSession, TCPConnector, ClientTimeout
-from aiohttp.typedefs import StrOrURL
+from aiohttp import ClientSession, ClientTimeout, TCPConnector
 from aiohttp.client_exceptions import ClientConnectorError
+from aiohttp.typedefs import StrOrURL
 
 from aio_deribit.exceptions import HTTPBadResponseError, HTTPConnectionFailError
 
@@ -14,18 +14,16 @@ Headers = dict[str, Any] | None
 
 class HTTPClient:
     def __init__(
-            self,
-            session: ClientSession | None = None,
-            timeout: int | None = None,
-            connection_limit: int = 0,
+        self,
+        session: ClientSession | None = None,
+        timeout: int | None = None,
+        connection_limit: int = 0,
     ) -> None:
-        """
-        :param session: Aiohttp client session, use None to create new session
+        """:param session: Aiohttp client session, use None to create new session
         :param timeout: Total number of seconds for the whole request, use None for disable timeout
         :param connection_limit: Total number simultaneous connections, use 0 for disable limit
         :return: None
         """
-
         self._ssl_context = ssl.create_default_context(cafile=certifi.where())
         self._connector = TCPConnector(ssl=self._ssl_context, limit=connection_limit)
         self._timeout = ClientTimeout(total=timeout)
@@ -38,8 +36,7 @@ class HTTPClient:
         self._bad_status = 400
 
     def _get_session(self) -> ClientSession:
-        """
-        Session manager
+        """Session manager
         :return ClientSession: Current or new session instance
         """
         if not self._session.closed:
@@ -48,17 +45,17 @@ class HTTPClient:
         return self._session
 
     def _create_session(self) -> ClientSession:
-        """
-        Session builder
+        """Session builder
         :return ClientSession: New session instance
         """
         return ClientSession(connector=self._connector, timeout=self._timeout)
 
     async def get(
-            self, url: StrOrURL, headers: Headers = None,
+        self,
+        url: StrOrURL,
+        headers: Headers = None,
     ) -> Any:
-        """
-        GET request
+        """GET request
         :param url: URL to GET request
         :param headers: Optional headers
         :return Any: JSON payload
@@ -73,8 +70,7 @@ class HTTPClient:
             raise HTTPConnectionFailError from err
 
     async def close(self) -> None:
-        """
-        Close current session
+        """Close current session
         :return None:
         """
         if not self._session.closed:
@@ -85,9 +81,9 @@ class HTTPClient:
         return self
 
     async def __aexit__(
-            self,
-            exc_type: Type[BaseException] | None,
-            exc_val: BaseException | None,
-            exc_tb: TracebackType | None,
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
     ) -> None:
         await self.close()

@@ -9,15 +9,13 @@ T = TypeVar("T")
 
 class Mapper:
     def __init__(self, retort: Retort) -> None:
-        """
-        :param retort:
+        """:param retort:
         :return None:
         """
         self._retort = retort
 
     def load(self, data: Any, class_: type[T]) -> T:
-        """
-        Create model from mapping.
+        """Create model from mapping.
 
         :param data: Any data.
         :param class_: Class to creation.
@@ -29,8 +27,7 @@ class Mapper:
             raise MappingError from err
 
     def dump(self, data: Any) -> Any:
-        """
-        Create mapping from the model.
+        """Create mapping from the model.
 
         :param data: Any data.
         :return:

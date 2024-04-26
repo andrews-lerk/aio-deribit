@@ -11,10 +11,75 @@ dependencies = [
     "adaptix>=3.0.0b4",
     "websockets>=12.0",
     "mypy>=1.9.0",
+    "ruff>=0.4.2",
+    "pre-commit>=3.7.0",
 ]
 requires-python = ">=3.11"
 readme = "README.md"
 license = {text = "MIT"}
+
+
+[tool.ruff]
+line-length = 120
+target-version="py311"
+src = ["src"]
+include = ["src/**.py"]
+
+lint.select = [
+    "ALL",
+]
+
+lint.ignore = [
+    "D100", "D101",
+    "ANN101"
+]
+
+
+[tool.ruff.lint.mccabe]
+max-complexity = 12
+
+
+[tool.ruff.lint.pylint]
+max-args = 15
+max-returns = 8
+
+
+[tool.ruff.lint.isort]
+known-first-party = ["src"]
+no-lines-before = ["local-folder"]
+
+
+[tool.ruff.lint.flake8-tidy-imports]
+ban-relative-imports = "parents"
+
+
+[tool.ruff.lint.flake8-quotes]
+inline-quotes = "double"
+multiline-quotes = "double"
+
+
+[tool.ruff.format]
+docstring-code-format = true
+docstring-code-line-length = 88
+quote-style = "double"
+
+
+[tool.mypy]
+packages = ["src"]
+python_version = "3.11"
+
+strict = true
+pretty = true
+disallow_any_explicit = false
+disallow_any_generics = false
+disallow_untyped_decorators = false
+disallow_subclassing_any = false
+allow_untyped_calls = true
+warn_unreachable = true
+show_column_numbers = true
+show_error_context = true
+allow_redefinition = true
+
 
 [tool.pdm]
 distribution = true

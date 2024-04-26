@@ -1,6 +1,5 @@
 class URLs:
-    def __init__(self):
-
+    def __init__(self) -> None:
         # Authentication - https://docs.deribit.com/?shell#authentication-2
         self.auth = "public/auth"
         self.exchange_token = "public/exchange_token"
@@ -22,4 +21,3 @@ class URLs:
 
         # Account management - https://docs.deribit.com/?python#account-management
         self.get_positions = "private/get_positions"
-

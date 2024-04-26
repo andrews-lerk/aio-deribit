@@ -9,11 +9,12 @@ help:
 
 .PHONY: lint
 lint: ## Lint source code
-	$(py) mypy $(code_dir) || true
+	pre-commit run --all-files
 
 .PHONY: install
 install: ## Install all depends
 	pdm install -G:all
+	pre-commit install
 
 .PHONY: update
 update: ## Update all depends

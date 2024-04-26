@@ -1,5 +1,5 @@
-from .time_utils import now_utc
-from .mapping import Mapper
 from .builder import query_builder
+from .mapping import Mapper
+from .time_utils import now_utc
 
 __all__ = ("Mapper", "now_utc", "query_builder")

@@ -5,14 +5,11 @@ from uuid import uuid4
 
 from aio_deribit.api.http.client import HTTPDeribitJRPCClient
 from aio_deribit.api.http.urls import HttpURL
+from aio_deribit.api.responses import Auth, Response
 from aio_deribit.clients.http import HTTPClient
 from aio_deribit.exceptions import InvalidCredentialsError
 from aio_deribit.tools import Mapper, now_utc, query_builder
 from aio_deribit.types import AuthType
-from aio_deribit.api.responses import (
-    Response,
-    Auth
-)
 
 
 class Authentication(HTTPDeribitJRPCClient):
@@ -22,15 +19,14 @@ class Authentication(HTTPDeribitJRPCClient):
         self._mapper = mapper
 
     async def auth(
-            self,
-            auth_type: AuthType,
-            client_id: str | None = None,
-            client_secret: str | None = None,
-            refresh_token: str | None = None,
-            **kwargs: Any
+        self,
+        auth_type: AuthType,
+        client_id: str | None = None,
+        client_secret: str | None = None,
+        refresh_token: str | None = None,
+        **kwargs: Any,
     ) -> Response[Auth]:
-        """
-        https://docs.deribit.com/#public-auth
+        """https://docs.deribit.com/#public-auth
 
         Specify auth type parameter by grand type:
 
@@ -73,8 +69,7 @@ class Authentication(HTTPDeribitJRPCClient):
         raise InvalidCredentialsError
 
     async def exchange_token(self, refresh_token: str, subject_id: int) -> Response[Auth]:
-        """
-        https://docs.deribit.com/?shell#public-exchange_token
+        """https://docs.deribit.com/?shell#public-exchange_token
 
         Generates a token for a new subject id. This method can be used to switch between subaccounts.
         :param refresh_token: Refresh token
@@ -82,13 +77,12 @@ class Authentication(HTTPDeribitJRPCClient):
         :return  Response[Auth]: Auth model.
         """
         payload = await self._get(
-            self._urls.base_url + self._urls.exchange_token + f"?refresh_token={refresh_token}&subject_id={subject_id}"
+            self._urls.base_url + self._urls.exchange_token + f"?refresh_token={refresh_token}&subject_id={subject_id}",
         )
         return self._mapper.load(payload, Response[Auth])
 
     async def fork_token(self, refresh_token: str, session_name: str) -> Response[Auth]:
-        """
-        https://docs.deribit.com/?shell#public-fork_token
+        """https://docs.deribit.com/?shell#public-fork_token
 
         Generates a token for a new named session. This method can be used only with session scoped tokens.
         :param refresh_token: Refresh token.
@@ -96,25 +90,35 @@ class Authentication(HTTPDeribitJRPCClient):
         :return: Response[Auth]: Auth model.
         """
         payload = await self._get(
-            self._urls.base_url + self._urls.fork_token + f"?refresh_token={refresh_token}&session_name={session_name}"
+            self._urls.base_url + self._urls.fork_token + f"?refresh_token={refresh_token}&session_name={session_name}",
         )
         return self._mapper.load(payload, Response[Auth])
 
 
 def _prepare_url_with_signature(
-        url: str,
-        client_id: str,
-        client_secret: str,
-        **kwargs: Any
+    url: str,
+    client_id: str,
+    client_secret: str,
+    **kwargs: Any,
 ) -> str:
     timestamp, nonce = now_utc(), uuid4()
-    signature = hmac.new(
-        bytes(client_secret, "latin-1"),
-        msg=bytes('{}\n{}\n{}'.format(timestamp, nonce, kwargs.get("data", "")), "latin-1"),
-        digestmod=hashlib.sha256
-    ).hexdigest().lower()
-    url = url + (f"?grant_type=client_signature"
-                 f"&client_id={client_id}&timestamp={timestamp}&nonce={nonce}&signature={signature}") + query_builder(
-        **kwargs
+    signature = (
+        hmac.new(
+            bytes(client_secret, "latin-1"),
+            msg=bytes("{}\n{}\n{}".format(timestamp, nonce, kwargs.get("data", "")), "latin-1"),
+            digestmod=hashlib.sha256,
+        )
+        .hexdigest()
+        .lower()
+    )
+    url = (
+        url
+        + (
+            f"?grant_type=client_signature"
+            f"&client_id={client_id}&timestamp={timestamp}&nonce={nonce}&signature={signature}"
+        )
+        + query_builder(
+            **kwargs,
+        )
     )
     return url
