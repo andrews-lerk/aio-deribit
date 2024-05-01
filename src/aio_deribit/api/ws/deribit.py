@@ -18,6 +18,12 @@ class DeribitWS:
         websocket: WSConnection,
         testnet: bool = False,
     ) -> None:
+        """
+        Class provides Deribit Websocket API.
+
+        :param websocket: Active WS connection.
+        :param testnet: Specify URI to use, by default production URI.
+        """
         self._client = WSDeribitJRPCClient(websocket)
         self._urls = WebsocketURI(testnet)
         self._mapper = Mapper(_RETORT)
@@ -34,8 +40,15 @@ class Connect:
         client: WSClient,
         testnet: bool = False,
     ) -> None:
-        """:param client: WSClient.
-        :param testnet: Specify connection URI to use.
+        """
+        Connect to the Deribit WebSocket server.
+
+        Awaiting :func:`DeribitConnect` yields a :class:`DeribitWS` which
+        can then be used to request Deribit API methods.
+
+        :param client: WSClient.
+        :param testnet: Specify connection URI to use, by default production URI.
+        :return None:
         """
         self._client = client
         self._testnet = testnet
@@ -51,7 +64,7 @@ class Connect:
         exc_val: BaseException | None,
         exc_tb: TracebackType | None,
     ) -> None:
-        await self.websocket.close()
+        await self.close()
 
     def __await__(self) -> Generator[Any, None, DeribitWS]:
         return self.__await_impl__().__await__()
@@ -62,6 +75,7 @@ class Connect:
         return DeribitWS(websocket, self._testnet)
 
     async def close(self) -> None:
+        """Close websocket connection."""
         await self.websocket.close()
 
 

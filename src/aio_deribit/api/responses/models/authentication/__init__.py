@@ -1,4 +1,4 @@
-"""Package provides Authentication Response models for Deribit API methods."""
+"""Package provides Authentication response models for Deribit API methods."""
 
 from .auth import Auth
 

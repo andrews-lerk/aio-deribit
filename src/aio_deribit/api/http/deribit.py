@@ -13,7 +13,8 @@ class DeribitHTTP:
         auth_type: AuthType = AuthType.HMAC,
         testnet: bool = False,
     ) -> None:
-        """Class provides Deribit HTTP API.
+        """
+        Class provides Deribit HTTP API.
 
         :param client: Specify HTTP Client.
         :param auth_type: Specify authentication type, do not specify to use HMAC by default.

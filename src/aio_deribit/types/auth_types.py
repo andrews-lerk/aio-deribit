@@ -2,7 +2,8 @@ from enum import Enum
 
 
 class AuthType(str, Enum):
-    """Deribit provides 3 authentication methods.
+    """
+    Deribit provides 3 authentication methods.
 
     https://docs.deribit.com/#authentication
     """

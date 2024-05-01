@@ -6,7 +6,8 @@ TData = TypeVar("TData")
 
 @dataclass
 class Response(Generic[TData]):
-    """The Deribit JSON-RPC API always responds with a JSON object with the following fields.
+    """
+    The Deribit JSON-RPC API always responds with a JSON object with the following fields.
 
     Exclude error field from this model.
 
@@ -14,6 +15,7 @@ class Response(Generic[TData]):
     """
 
     jsonrpc: str
+    id_: str
     testnet: bool
 
     result: TData
@@ -21,4 +23,3 @@ class Response(Generic[TData]):
     us_in: int
     us_out: int
     us_diff: int
-    id_: int | str | None = None

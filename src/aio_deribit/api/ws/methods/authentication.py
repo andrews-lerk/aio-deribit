@@ -12,10 +12,20 @@ from aio_deribit.tools import Mapper, now_utc
 from aio_deribit.types import AuthType
 
 logger = logging.getLogger(__name__)
+MsgParams = dict[str, Any]
 
 
 class Authentication:
     def __init__(self, client: WSDeribitJRPCClient, urls: WebsocketURI, mapper: Mapper) -> None:
+        """
+        Class provides Authentication API.
+
+        https://docs.deribit.com/#authentication-2
+
+        :param client: WS client.
+        :param urls: WS URIs.
+        :param mapper: Mapper for responses parsing.
+        """
         self._client = client
         self._urls = urls
         self._mapper = mapper
@@ -27,9 +37,10 @@ class Authentication:
         client_id: str | None = None,
         client_secret: str | None = None,
         refresh_token: str | None = None,
-        **kwargs: Any,
+        **kwargs: MsgParams,
     ) -> Response[Auth]:
-        """https://docs.deribit.com/#public-auth
+        """
+        https://docs.deribit.com/#public-auth
 
         Specify auth type parameter by grand type:
 
@@ -72,7 +83,8 @@ class Authentication:
         return self._mapper.load(payload, Response[Auth])
 
     async def exchange_token(self, refresh_token: str, subject_id: int) -> Response[Auth]:
-        """https://docs.deribit.com/?shell#public-exchange_token
+        """
+        https://docs.deribit.com/?shell#public-exchange_token
 
         Generates a token for a new subject id. This method can be used to switch between subaccounts.
         :param refresh_token: Refresh token
@@ -85,7 +97,8 @@ class Authentication:
         return self._mapper.load(payload, Response[Auth])
 
     async def fork_token(self, refresh_token: str, session_name: str) -> Response[Auth]:
-        """https://docs.deribit.com/?shell#public-fork_token
+        """
+        https://docs.deribit.com/?shell#public-fork_token
 
         Generates a token for a new named session. This method can be used only with session scoped tokens.
         :param refresh_token: Refresh token.
@@ -97,8 +110,9 @@ class Authentication:
         payload = await self._client.request(method, params)
         return self._mapper.load(payload, Response[Auth])
 
-    async def logout(self, *, access_token: str | None = None, **kwargs: Any) -> None:
-        """https://docs.deribit.com/#private-logout
+    async def logout(self, *, access_token: str | None = None, **kwargs: MsgParams) -> None:
+        """
+        https://docs.deribit.com/#private-logout
 
         Gracefully close websocket connection,
         when COD (Cancel On Disconnect) is enabled orders are not cancelled.
@@ -119,7 +133,7 @@ class Authentication:
 def _prepare_msg_params_with_signature(
     client_id: str,
     client_secret: str,
-    **kwargs: Any,
+    **kwargs: MsgParams,
 ) -> dict[str, Any]:
     timestamp, nonce = now_utc(), str(uuid4())
     signature = (
@@ -131,7 +145,7 @@ def _prepare_msg_params_with_signature(
         .hexdigest()
         .lower()
     )
-    msg = {
+    return {
         "grant_type": "client_signature",
         "client_id": client_id,
         "timestamp": timestamp,
@@ -139,4 +153,3 @@ def _prepare_msg_params_with_signature(
         "nonce": nonce,
         **kwargs,
     }
-    return msg

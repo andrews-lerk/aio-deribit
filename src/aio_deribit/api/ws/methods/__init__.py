@@ -1,3 +1,5 @@
+"""Package provides WS API methods for Deribit."""
+
 from .account_management import AccountManagement
 from .authentication import Authentication
 from .session_management import SessionManagement

@@ -2,13 +2,13 @@ from __future__ import annotations
 
 import asyncio
 import json
-from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from typing import Any
+from typing import Any, AsyncIterator  # noqa: UP035
 
 
 class EventBus:
     def __init__(self) -> None:
+        """Class provides event bus for websocket incoming messages."""
         self._listeners: set[MessagesQueue] = set()
 
     @asynccontextmanager
@@ -21,7 +21,7 @@ class EventBus:
         finally:
             self._listeners.remove(event)
 
-    async def emit(self, msg: Any) -> None:
+    async def emit(self, msg: Any) -> None:  # noqa: ANN401
         """Emit message to all listeners."""
         await asyncio.gather(*[listener.add_result(msg) for listener in self._listeners])
 
@@ -32,16 +32,17 @@ class EventBus:
 
 class MessagesQueue:
     def __init__(self) -> None:
+        """Class provides queue for websocket incoming messages."""
         self.__msg_queue: asyncio.Queue = asyncio.Queue()
 
-    async def get_result(self) -> Any:
+    async def get_result(self) -> Any:  # noqa: ANN401
         """Get result from a queue."""
         return await self.__msg_queue.get()
 
-    async def add_result(self, msg: Any) -> None:
+    async def add_result(self, msg: Any) -> None:  # noqa: ANN401
         """Put result to a queue."""
         await self.__msg_queue.put(msg)
 
     async def close(self) -> None:
-        """Indicate about stop broadcasting messages."""
+        """Put to queue 'stop broadcasting' message."""
         await self.__msg_queue.put(json.dumps({"aio-deribit": "stop broadcasting"}))

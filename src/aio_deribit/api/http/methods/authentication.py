@@ -16,12 +16,15 @@ QueryParams = dict[str, Any]
 
 class Authentication(HTTPDeribitJRPCClient):
     def __init__(self, client: HTTPClient, auth_type: AuthType, urls: HttpURL, mapper: Mapper) -> None:
-        """Class provides Authentication methods for Deribit.
+        """
+        Class provides Authentication methods for Deribit.
+
+        https://docs.deribit.com/#authentication-2
 
         :param client: HTTP Client.
         :param auth_type: Authentication type.
         :param urls: HTTP URLs.
-        :param mapper: Mapper for responses unpack.
+        :param mapper: Mapper for responses parsing.
         :return None:
         """
         super().__init__(client, auth_type)
@@ -36,7 +39,8 @@ class Authentication(HTTPDeribitJRPCClient):
         refresh_token: str | None = None,
         **kwargs: QueryParams,
     ) -> Response[Auth]:
-        """https://docs.deribit.com/#public-auth .
+        """
+        https://docs.deribit.com/#public-auth
 
         Specify auth type parameter by grand type:
 
@@ -79,9 +83,11 @@ class Authentication(HTTPDeribitJRPCClient):
         raise InvalidCredentialsError
 
     async def exchange_token(self, refresh_token: str, subject_id: int) -> Response[Auth]:
-        """https://docs.deribit.com/?shell#public-exchange_token .
+        """
+        https://docs.deribit.com/?shell#public-exchange_token
 
         Generates a token for a new subject id. This method can be used to switch between subaccounts.
+
         :param refresh_token: Refresh token
         :param subject_id: New subject id
         :return  Response[Auth]: Auth model.
@@ -92,9 +98,11 @@ class Authentication(HTTPDeribitJRPCClient):
         return self._mapper.load(payload, Response[Auth])
 
     async def fork_token(self, refresh_token: str, session_name: str) -> Response[Auth]:
-        """https://docs.deribit.com/?shell#public-fork_token .
+        """
+        https://docs.deribit.com/?shell#public-fork_token
 
         Generates a token for a new named session. This method can be used only with session scoped tokens.
+
         :param refresh_token: Refresh token.
         :param session_name: New session name.
         :return: Response[Auth]: Auth model.

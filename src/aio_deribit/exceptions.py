@@ -6,7 +6,14 @@ class AioDeribitError(Exception):
 
 
 class DeribitBadResponseError(AioDeribitError):
-    def __init__(self, error_payload: Any) -> None:
+    def __init__(self, error_payload: Any) -> None:  # noqa: ANN401
+        """
+        RPC Deribit error.
+
+        https://docs.deribit.com/#rpc-error-codes
+
+        :param error_payload: Any payload data.
+        """
         self.error_payload = error_payload
 
     def __str__(self) -> str:
@@ -15,6 +22,7 @@ class DeribitBadResponseError(AioDeribitError):
 
 class HTTPBadResponseError(AioDeribitError):
     def __init__(self, payload: dict[str, Any], status_code: int, reason: str | None = "unknown") -> None:
+        """HTTP bad response."""
         self.payload = payload
         self.status_code = status_code
         self.reason = reason

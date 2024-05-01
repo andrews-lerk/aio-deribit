@@ -9,12 +9,12 @@ from aio_deribit.exceptions import DeribitBadResponseError, WSConnectionClosedEr
 from .events import EventBus
 
 Message = dict[str, Any]
-Payload = Any
 
 
 class WSDeribitJRPCClient:
     def __init__(self, websocket: WSConnection) -> None:
-        """Class provides WS JRPC Client for Deribit.
+        """
+        Class provides WS JRPC Client for Deribit.
 
         :param websocket: Active WS connection
         :return None:
@@ -24,7 +24,7 @@ class WSDeribitJRPCClient:
 
         self.__listening_task = self._start_listening()
 
-        # base msg template
+        # Base msg template
         self._base_msg = {"jsonrpc": "2.0", "id": -0, "method": "", "params": {}}
 
     async def request(
@@ -32,12 +32,13 @@ class WSDeribitJRPCClient:
         method: str,
         params: dict[str, Any],
         access_token: str | None = None,
-    ) -> Payload:
-        """Send message and receive data one time with defined timeout.
+    ) -> Any:  # noqa: ANN401
+        """
+        Send message and receive data one time with defined timeout.
 
-        :param access_token:
-        :param params:
-        :param method: Message for sending.
+        :param method: Method for add to msg.
+        :param params: Params for add to msg.
+        :param access_token: Optional access token.
         :return Any: Any data.
         """
         id_ = str(uuid4())
@@ -59,7 +60,8 @@ class WSDeribitJRPCClient:
         return payload
 
     async def start_listening(self) -> None:
-        """Start websocket listening task.
+        """
+        Start websocket listening task.
 
         This method create asyncio Task that working on background
         and recv incoming messages.
@@ -77,10 +79,10 @@ class WSDeribitJRPCClient:
         self.__listening_task.cancel()
 
     def _start_listening(self) -> asyncio.Task[None]:
-        task = asyncio.get_running_loop().create_task(self.__listen(), name="aio-deribit WS listening task")
-        return task
+        return asyncio.get_running_loop().create_task(self.__listen(), name="aio-deribit WS listening task")
 
     async def __listen(self) -> None:
+        """Work as an asyncio task that notify all listeners about incoming messages."""
         try:
             async for msg in self._websocket:
                 await self._events.emit(msg)

@@ -19,9 +19,12 @@ class HTTPClient:
         timeout: int | None = None,
         connection_limit: int = 0,
     ) -> None:
-        """:param session: Aiohttp client session, use None to create new session
-        :param timeout: Total number of seconds for the whole request, use None for disable timeout
-        :param connection_limit: Total number simultaneous connections, use 0 for disable limit
+        """
+        Class provides base HTTP client.
+
+        :param session: Aiohttp client session, use None to create new session.
+        :param timeout: Total number of seconds for the whole request, use None for disable timeout.
+        :param connection_limit: Total number simultaneous connections, use 0 for disable limit.
         :return: None
         """
         self._ssl_context = ssl.create_default_context(cafile=certifi.where())
@@ -36,8 +39,10 @@ class HTTPClient:
         self._bad_status = 400
 
     def _get_session(self) -> ClientSession:
-        """Session manager
-        :return ClientSession: Current or new session instance
+        """
+        Session manager.
+
+        :return ClientSession: Current or new session instance.
         """
         if not self._session.closed:
             return self._session
@@ -45,8 +50,10 @@ class HTTPClient:
         return self._session
 
     def _create_session(self) -> ClientSession:
-        """Session builder
-        :return ClientSession: New session instance
+        """
+        Session builder.
+
+        :return ClientSession: New session instance.
         """
         return ClientSession(connector=self._connector, timeout=self._timeout)
 
@@ -54,23 +61,27 @@ class HTTPClient:
         self,
         url: StrOrURL,
         headers: Headers = None,
-    ) -> Any:
-        """GET request
-        :param url: URL to GET request
-        :param headers: Optional headers
-        :return Any: JSON payload
+    ) -> Any:  # noqa: ANN401
+        """
+        GET request.
+
+        :param url: URL to GET request.
+        :param headers: Optional headers.
+        :return Any: JSON payload.
         """
         try:
             async with self._get_session().get(url, headers=headers) as response:
                 payload = await response.json()
                 if response.status >= self._bad_status:
                     raise HTTPBadResponseError(payload, response.status, response.reason)
-            return payload
+                return payload
         except ClientConnectorError as err:
             raise HTTPConnectionFailError from err
 
     async def close(self) -> None:
-        """Close current session
+        """
+        Close current session.
+
         :return None:
         """
         if not self._session.closed:
