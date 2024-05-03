@@ -17,7 +17,7 @@ class DeribitBadResponseError(AioDeribitError):
         self.error_payload = error_payload
 
     def __str__(self) -> str:
-        return "Deribit bad response. " f"Error payload: {self.error_payload}"
+        return f"Deribit bad response. Error payload: {self.error_payload}"
 
 
 class HTTPBadResponseError(AioDeribitError):
@@ -28,11 +28,11 @@ class HTTPBadResponseError(AioDeribitError):
         self.reason = reason
 
     def __str__(self) -> str:
-        return "HTTP client bad response. " f"Status code: {self.status_code}. Reason: {self.reason}."
+        return f"HTTP client bad response. Status code: {self.status_code}. Reason: {self.reason}."
 
 
 class HTTPConnectionFailError(AioDeribitError):
-    """Raised if a connection can not be established."""
+    """Raises if a connection can not be established."""
 
 
 class MappingError(AioDeribitError):
@@ -40,7 +40,7 @@ class MappingError(AioDeribitError):
 
 
 class WSConnectionClosedError(AioDeribitError):
-    """Raised when trying to interact with a closed connection."""
+    """Raises when trying to interact with a closed connection."""
 
 
 class WSConnectionFailError(AioDeribitError):

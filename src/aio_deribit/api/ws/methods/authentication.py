@@ -123,9 +123,8 @@ class Authentication:
         :return:
         """
         method = self._urls.logout
-        params = {**kwargs}
         try:
-            await self._client.request(method, params, access_token)
+            await self._client.request(method, kwargs, access_token)
         except WSConnectionClosedError:
             logger.info("Websocket connection closed.")
 

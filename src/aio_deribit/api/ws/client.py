@@ -1,6 +1,7 @@
 import asyncio
 import copy
 import json
+from collections.abc import AsyncIterator
 from typing import Any
 from uuid import uuid4
 
@@ -47,7 +48,7 @@ class WSDeribitJRPCClient:
             async with self._events.new_listener() as listener:
                 await self._websocket.send(msg)
                 async with asyncio.timeout(self._websocket.recv_timeout):
-                    while self._websocket.open:
+                    while True:
                         payload = json.loads(await listener.get_result())
                         if payload.get("id") == id_:
                             if payload.get("error"):
@@ -58,6 +59,20 @@ class WSDeribitJRPCClient:
         except TimeoutError as err:
             raise WSRecvTimeoutError from err
         return payload
+
+    async def subscription(self) -> AsyncIterator[Any]:
+        """
+        Async iteration on incoming messages only with `subscribe` method.
+
+        After message about stop broadcasting from event bus, iteration stops normally.
+        """
+        async with self._events.new_listener() as listener:
+            while True:
+                payload = json.loads(await listener.get_result())
+                if payload.get("method") == "subscription":
+                    yield payload
+                if payload.get("aio-deribit") == "stop broadcasting":
+                    return
 
     async def start_listening(self) -> None:
         """
@@ -82,7 +97,7 @@ class WSDeribitJRPCClient:
         return asyncio.get_running_loop().create_task(self.__listen(), name="aio-deribit WS listening task")
 
     async def __listen(self) -> None:
-        """Work as an asyncio task that notify all listeners about incoming messages."""
+        """Work as an asyncio task that notify all listeners about all incoming messages."""
         try:
             async for msg in self._websocket:
                 await self._events.emit(msg)
