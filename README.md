@@ -1,7 +1,5 @@
 # Deribit asynchronous python WSS and HTTP client
 
-## Prerelease target date - 30.04.2024
-
 ### Features
 
 - Deribit API version 2.0 -  https://docs.deribit.com/
