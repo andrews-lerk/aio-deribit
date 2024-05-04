@@ -6,7 +6,7 @@ from aio_deribit.api.retort import _RETORT
 from aio_deribit.clients.ws import WSClient, WSConnection
 from aio_deribit.tools import Mapper
 from .client import WSDeribitJRPCClient
-from .methods import AccountManagement, Authentication, SessionManagement
+from .methods import AccountManagement, Authentication, SessionManagement, Supporting
 from .urls import WebsocketURI
 
 Headers = dict[str, Any] | None
@@ -31,6 +31,7 @@ class DeribitWS:
         # API
         self.authentication = Authentication(self._client, self._urls, self._mapper)
         self.session_management = SessionManagement(self._client, self._urls, self._mapper)
+        self.supporting = Supporting(self._client, self._urls, self._mapper)
         self.account_management = AccountManagement(self._client, self._urls, self._mapper)
 
 

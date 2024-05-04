@@ -13,6 +13,8 @@ class SessionManagement:
         """
         Class provides Session management API.
 
+        https://docs.deribit.com/#session-management
+
         :param client: WS Client.
         :param urls: WS URIs.
         :param mapper: Mapper for responses parsing.
