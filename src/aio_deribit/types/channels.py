@@ -20,10 +20,12 @@ class Channel(Generic[TData]):
 
     @property
     def channel(self) -> str:
+        """Channel name."""
         return self._channel
 
     @property
     def resp_type(self) -> type[TData]:
+        """Response model type."""
         return self._resp_type
 
 
@@ -90,4 +92,7 @@ class Channels(StrEnum):
 
     @classmethod
     def deribit_price_index(cls, index_name: str) -> Channel[SubDeribitPriceIndex]:
-        return Channel(cls._deribit_price_index.format(index_name=index_name), SubDeribitPriceIndex)
+        """Configure and return deribit_price_index channel."""
+        return Channel[SubDeribitPriceIndex](
+            cls._deribit_price_index.format(index_name=index_name), SubDeribitPriceIndex
+        )

@@ -22,7 +22,15 @@ class SubscriptionManagement:
         self._mapper = mapper
 
     async def subscribe(self, channels: list[Channel]) -> Response[list[str]]:
+        """
+        https://docs.deribit.com/#public-subscribe
+
+        Subscribe to one or more channels.
+
+        :param channels: A list of channels to subscribe to.
+        :return  Response[list[str]]: Result with list of subscribed channels.
+        """
         method = self._urls.public_sub
-        params = {"channels": list(channel.channel for channel in channels)}
+        params = {"channels": [channel.channel for channel in channels]}
         result = await self._client.request(method, params)
         return self._mapper.load(result, Response[list[str]])
