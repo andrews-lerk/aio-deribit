@@ -20,5 +20,13 @@ class URLs:
         self.status = "public/status"
         self.test = "public/test"
 
+        # Subscription management - https://docs.deribit.com/#subscription-management
+        self.public_sub = "public/subscribe"
+        self.public_un_sub = "public/unsubscribe"
+        self.public_un_sub_all = "public/unsubscribe_all"
+        self.private_sub = "private/subscribe"
+        self.private_un_sub = "private/unsubscribe"
+        self.private_un_sub_all = "private/unsubscribe_all"
+
         # Account management - https://docs.deribit.com/?python#account-management
         self.get_positions = "private/get_positions"

@@ -1,14 +1,17 @@
-from collections.abc import Generator
+from collections.abc import AsyncIterator, Generator
 from types import TracebackType
-from typing import Any
+from typing import Any, TypeVar
 
+from aio_deribit.api.responses import SubResponse
 from aio_deribit.api.retort import _RETORT
 from aio_deribit.clients.ws import WSClient, WSConnection
 from aio_deribit.tools import Mapper
+from aio_deribit.types import Channel
 from .client import WSDeribitJRPCClient
-from .methods import AccountManagement, Authentication, SessionManagement, Supporting
+from .methods import AccountManagement, Authentication, SessionManagement, SubscriptionManagement, Supporting
 from .urls import WebsocketURI
 
+TData = TypeVar("TData")
 Headers = dict[str, Any] | None
 
 
@@ -32,7 +35,15 @@ class DeribitWS:
         self.authentication = Authentication(self._client, self._urls, self._mapper)
         self.session_management = SessionManagement(self._client, self._urls, self._mapper)
         self.supporting = Supporting(self._client, self._urls, self._mapper)
+        self.subscription_management = SubscriptionManagement(self._client, self._urls, self._mapper)
         self.account_management = AccountManagement(self._client, self._urls, self._mapper)
+
+    async def sub_listening(self, channel: Channel[TData]) -> AsyncIterator[SubResponse[TData]]:
+        """Listen for a specific channel."""
+        async for message in self._client.subscription():
+            if isinstance(message.get("params"), dict) and message["params"].get("channel") == channel.channel:
+                yield self._mapper.load(message, SubResponse[channel.resp_type])  # type: ignore[name-defined]
+        return
 
 
 class Connect:

@@ -2,7 +2,7 @@ import asyncio
 import json
 import ssl
 from types import TracebackType
-from typing import Any, AsyncIterator  # noqa: UP035
+from typing import Any, AsyncIterator, Self  # noqa: UP035
 
 import certifi
 import websockets
@@ -88,7 +88,7 @@ class WSClient:
         """Close all WebSocket connections created by WSClient."""
         await asyncio.gather(*[asyncio.create_task(self.close(ws)) for ws in self._ws_conn_pool])
 
-    async def __aenter__(self) -> "WSClient":
+    async def __aenter__(self) -> Self:
         return self
 
     async def __aexit__(

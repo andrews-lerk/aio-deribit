@@ -1,6 +1,6 @@
 import ssl
 from types import TracebackType
-from typing import Any
+from typing import Any, Self
 
 import certifi
 from aiohttp import ClientSession, ClientTimeout, TCPConnector
@@ -88,7 +88,7 @@ class HTTPClient:
             await self._session.close()
         await self._connector.close()
 
-    async def __aenter__(self) -> "HTTPClient":
+    async def __aenter__(self) -> Self:
         return self
 
     async def __aexit__(

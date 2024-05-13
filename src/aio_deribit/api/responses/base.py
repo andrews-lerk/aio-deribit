@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
 from typing import Generic, TypeVar
 
@@ -23,3 +25,25 @@ class Response(Generic[TData]):
     us_in: int
     us_out: int
     us_diff: int
+
+
+@dataclass
+class SubResponse(Generic[TData]):
+    """
+    Base subscription response model.
+
+    https://docs.deribit.com/#subscriptions
+    """
+
+    jsonrpc: str
+    method: str
+    params: Params[TData]
+
+
+@dataclass
+class Params(Generic[TData]):
+    channel: str
+    data: TData
+
+    # optional label only for private channels
+    label: str | None = None
