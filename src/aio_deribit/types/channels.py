@@ -1,5 +1,4 @@
-from enum import StrEnum
-from typing import Generic, TypeVar
+from typing import Generic, TypeVar, get_args
 
 from aio_deribit.api.responses import SubDeribitPriceIndex
 
@@ -7,16 +6,14 @@ TData = TypeVar("TData")
 
 
 class Channel(Generic[TData]):
-    def __init__(self, channel: str, resp_type: type[TData]) -> None:
+    def __init__(self, channel: str) -> None:
         """
         Class provides specific channel configuration.
 
         :param channel: Channel name.
-        :param resp_type: Response model type.
         :return None:
         """
         self._channel: str = channel
-        self._resp_type: type[TData] = resp_type
 
     @property
     def channel(self) -> str:
@@ -26,10 +23,15 @@ class Channel(Generic[TData]):
     @property
     def resp_type(self) -> type[TData]:
         """Response model type."""
-        return self._resp_type
+        origin = getattr(self, "__orig_class__", None)
+        if not origin:
+            err = "No generic type for channel"
+            raise ValueError(err)
+        orig_t: type[TData] = get_args(origin)[0]
+        return orig_t
 
 
-class Channels(StrEnum):
+class Channels:
     """
     Class provides all available channels for Deribit subscriptions.
 
@@ -93,6 +95,4 @@ class Channels(StrEnum):
     @classmethod
     def deribit_price_index(cls, index_name: str) -> Channel[SubDeribitPriceIndex]:
         """Configure and return deribit_price_index channel."""
-        return Channel[SubDeribitPriceIndex](
-            cls._deribit_price_index.format(index_name=index_name), SubDeribitPriceIndex
-        )
+        return Channel[SubDeribitPriceIndex](cls._deribit_price_index.format(index_name=index_name))
