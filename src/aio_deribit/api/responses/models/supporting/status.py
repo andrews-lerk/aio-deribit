@@ -3,5 +3,5 @@ from dataclasses import dataclass
 
 @dataclass
 class Status:
-    locked: bool
-    locked_currencies: list[str]
+    locked: str
+    locked_indices: list[str] | None = None
