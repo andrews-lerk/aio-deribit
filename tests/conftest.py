@@ -1,16 +1,17 @@
 import multiprocessing as mp
-import time
 
 import pytest
-import pytest_asyncio
 import uvloop
+from pytest_asyncio import is_async_test
+from pytest_asyncio.plugin import Coroutine
 
 from .mocks.ws_server import run
 
 
-@pytest.fixture(scope='session', autouse=True)
-def mock_ws_serve() -> None:
-    mp.set_start_method('forkserver')
+@pytest.fixture(scope="session", autouse=True)
+def _mock_ws_serve() -> None:
+    """Start WSMockServer process."""
+    mp.set_start_method("forkserver")
     event = mp.Event()
     server_process = mp.Process(target=run, args=(event, 51717))
     server_process.start()
@@ -20,5 +21,14 @@ def mock_ws_serve() -> None:
 
 
 @pytest.fixture(scope="session", autouse=True)
-def event_loop_policy():
+def event_loop_policy() -> uvloop.EventLoopPolicy:
+    """Set uvloop event loop policy for tests."""
     return uvloop.EventLoopPolicy()
+
+
+def pytest_collection_modifyitems(items: list[Coroutine]) -> None:
+    """Run all tests inside the same event loop."""
+    pytest_asyncio_tests = (item for item in items if is_async_test(item))
+    session_scope_marker = pytest.mark.asyncio(scope="session")
+    for async_test in pytest_asyncio_tests:
+        async_test.add_marker(session_scope_marker, append=False)

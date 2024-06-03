@@ -9,7 +9,7 @@ help:
 
 .PHONY: test
 test: ## Run tests
-	$(py) pytest -v
+	$(py) pytest -v -s
 
 .PHONY: lint
 lint: ## Lint source code
