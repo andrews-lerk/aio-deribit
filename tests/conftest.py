@@ -1,15 +1,16 @@
 import multiprocessing as mp
+from collections.abc import Generator
 
 import pytest
 import uvloop
 from pytest_asyncio import is_async_test
 from pytest_asyncio.plugin import Coroutine
 
-from .mocks.ws_server import run
+from tests.mocks.ws_server import run
 
 
 @pytest.fixture(scope="session", autouse=True)
-def _mock_ws_serve() -> None:
+def _mock_ws_serve() -> Generator[None, None, None]:
     """Start WSMockServer process."""
     mp.set_start_method("forkserver")
     event = mp.Event()

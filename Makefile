@@ -1,7 +1,4 @@
 py := pdm run
-package_dir := src
-tests_dir := tests
-code_dir := $(package_dir)
 
 .PHONY: help
 help:
@@ -9,7 +6,7 @@ help:
 
 .PHONY: test
 test: ## Run tests
-	$(py) pytest -v -s
+	$(py) pytest -v
 
 .PHONY: lint
 lint: ## Lint source code
@@ -23,3 +20,4 @@ install: ## Install all depends
 .PHONY: update
 update: ## Update all depends
 	pdm update --update-all
+	$(py) pre-commit autoupdate

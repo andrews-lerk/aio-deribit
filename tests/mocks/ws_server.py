@@ -1,13 +1,13 @@
 import asyncio
 import json
-from multiprocessing import Event
+from multiprocessing.synchronize import Event
 from pathlib import Path
 
 from websockets.server import WebSocketServerProtocol, serve
 
 
 class WSMockServer:
-    def __init__(self, responses_path: Path | str) -> None:
+    def __init__(self, responses_path: Path) -> None:
         """Class provides WebSocket server for testing purposes."""
         self.responses_path = responses_path
 
@@ -31,7 +31,7 @@ class WSMockServer:
             return json.dumps(json.load(fp))
 
 
-async def main(event: Event, port: int, files: Path | str) -> None:
+async def main(event: Event, port: int, files: Path) -> None:
     """Start mock websocket server."""
     mock_server = WSMockServer(files)
     async with serve(mock_server.handle_messages, host="127.0.0.1", port=port) as server:

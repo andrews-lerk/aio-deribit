@@ -129,7 +129,7 @@ def _prepare_url_with_signature(
         .hexdigest()
         .lower()
     )
-    return (
+    return (  # type: ignore[no-any-return]
         url
         + (
             f"?grant_type=client_signature"

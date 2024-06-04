@@ -42,7 +42,7 @@ class DeribitWS:
         """Listen for a specific channel."""
         async for message in self._client.subscription():
             if isinstance(message.get("params"), dict) and message["params"].get("channel") == channel.channel:
-                yield self._mapper.load(message, SubResponse[channel.resp_type])  # type: ignore[name-defined]
+                yield self._mapper.load(message, SubResponse[channel.resp_type])
         return
 
 
