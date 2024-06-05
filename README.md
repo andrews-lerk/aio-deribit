@@ -1,6 +1,6 @@
 <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/andrews-lerk/aio-deribit/blob/dev/docs/logo/deribit-dark.png?raw=true">
-    <source media="(prefers-color-scheme: light)" srcset="https://github.com/andrews-lerk/aio-deribit/blob/dev/docs/logo/deribit-light.png?raw=true">
+    <source media="(prefers-color-scheme: light)" srcset="https://github.com/andrews-lerk/aio-deribit/blob/dev/docs/logo/deribit-dark.png?raw=true">
+    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/andrews-lerk/aio-deribit/blob/dev/docs/logo/deribit-light.png?raw=true">
     <img alt="deribit logo" src="docs/logo/deribit-dark.png" width="600">
 </picture>
 
