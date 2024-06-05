@@ -5,7 +5,7 @@
 </picture>
 
 ![MIT License](https://img.shields.io/github/license/andrews-lerk/aio-deribit)
-[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://github.com/pre-commit/pre-commit)
+[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-green?logo=pre-commit)](https://github.com/pre-commit/pre-commit)
 
 
 # Deribit asynchronous python WSS and HTTP client
