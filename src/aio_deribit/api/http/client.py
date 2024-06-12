@@ -20,14 +20,14 @@ class HTTPDeribitJRPCClient:
         """
         Class provides HTTP JRPC Client for Deribit.
 
-        :param client: HTTP client.
+        :param client: Base HTTP client.
         :param auth_type: Authentication type.
         :return None:
         """
         self._client = client
         self._auth_type = auth_type
 
-    async def _get(
+    async def get(
         self,
         url: StrOrURL,
         client_id: str | None = None,

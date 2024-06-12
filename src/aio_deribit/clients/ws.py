@@ -24,7 +24,6 @@ class WSClient:
     def __init__(
         self,
         recv_timeout: int = 15,
-        max_queue: int = 10,
         open_timeout: int | None = 10,
         close_timeout: int | None = None,
     ) -> None:
@@ -32,7 +31,6 @@ class WSClient:
         Class provides base WS client.
 
         :param recv_timeout: Max server response time in seconds, default 15 seconds.
-        :param max_queue: Parameter sets the maximum length of the queue that holds incoming messages.
         :param open_timeout: Timeout for opening the connection in seconds, default 10 seconds.
         :param close_timeout: Parameter defines a maximum wait time for completing
             the closing handshake and terminating the TCP connection,
@@ -42,7 +40,6 @@ class WSClient:
         self._ssl_context = ssl.create_default_context(cafile=certifi.where())
 
         self.recv_timeout = recv_timeout
-        self._max_queue = max_queue
         self._open_timeout = open_timeout
         self._close_timeout = close_timeout
 
@@ -62,7 +59,6 @@ class WSClient:
                 uri=uri,
                 extra_headers=headers,
                 open_timeout=self._open_timeout,
-                max_queue=self._max_queue,
                 close_timeout=self._close_timeout,
                 ssl=self._ssl_context,
             )

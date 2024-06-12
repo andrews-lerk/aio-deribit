@@ -6,7 +6,6 @@ from uuid import uuid4
 from aio_deribit.api.http.client import HTTPDeribitJRPCClient
 from aio_deribit.api.http.urls import HttpURL
 from aio_deribit.api.responses import Auth, Response
-from aio_deribit.clients.http import HTTPClient
 from aio_deribit.exceptions import InvalidCredentialsError
 from aio_deribit.tools import Mapper, now_utc, query_builder
 from aio_deribit.types import AuthType
@@ -14,20 +13,19 @@ from aio_deribit.types import AuthType
 QueryParams = dict[str, Any]
 
 
-class Authentication(HTTPDeribitJRPCClient):
-    def __init__(self, client: HTTPClient, auth_type: AuthType, urls: HttpURL, mapper: Mapper) -> None:
+class Authentication:
+    def __init__(self, client: HTTPDeribitJRPCClient, urls: HttpURL, mapper: Mapper) -> None:
         """
         Class provides Authentication methods for Deribit.
 
         https://docs.deribit.com/#authentication-2
 
-        :param client: HTTP Client.
-        :param auth_type: Authentication type.
+        :param client: HTTP JRPC Client.
         :param urls: HTTP URLs.
         :param mapper: Mapper for responses parsing.
         :return None:
         """
-        super().__init__(client, auth_type)
+        self._client = client
         self._urls = urls
         self._mapper = mapper
 
@@ -69,16 +67,16 @@ class Authentication(HTTPDeribitJRPCClient):
         if auth_type == auth_type.BASIC and client_id and client_secret:
             url = url + f"?grant_type=client_credentials&client_id={client_id}&client_secret={client_secret}"
             url += query_builder(**kwargs)
-            payload = await self._get(url)
+            payload = await self._client.get(url)
             return self._mapper.load(payload, Response[Auth])
         if auth_type == auth_type.HMAC and client_id and client_secret:
             url = _prepare_url_with_signature(url, client_id, client_secret, **kwargs)
-            payload = await self._get(url)
+            payload = await self._client.get(url)
             return self._mapper.load(payload, Response[Auth])
         if auth_type == auth_type.BEARER and refresh_token:
             url += f"?grant_type=refresh_token&refresh_token={refresh_token}"
             url += query_builder(**kwargs)
-            payload = await self._get(url)
+            payload = await self._client.get(url)
             return self._mapper.load(payload, Response[Auth])
         raise InvalidCredentialsError
 
@@ -92,7 +90,7 @@ class Authentication(HTTPDeribitJRPCClient):
         :param subject_id: New subject id
         :return  Response[Auth]: Auth model.
         """
-        payload = await self._get(
+        payload = await self._client.get(
             self._urls.base_url + self._urls.exchange_token + f"?refresh_token={refresh_token}&subject_id={subject_id}",
         )
         return self._mapper.load(payload, Response[Auth])
@@ -107,7 +105,7 @@ class Authentication(HTTPDeribitJRPCClient):
         :param session_name: New session name.
         :return: Response[Auth]: Auth model.
         """
-        payload = await self._get(
+        payload = await self._client.get(
             self._urls.base_url + self._urls.fork_token + f"?refresh_token={refresh_token}&session_name={session_name}",
         )
         return self._mapper.load(payload, Response[Auth])
