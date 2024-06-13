@@ -8,7 +8,18 @@ from aio_deribit.clients.ws import WSClient, WSConnection
 from aio_deribit.tools import Mapper
 from aio_deribit.types import Channel
 from .client import WSDeribitJRPCClient
-from .methods import AccountManagement, Authentication, SessionManagement, SubscriptionManagement, Supporting
+from .methods import (
+    AccountManagement,
+    Authentication,
+    BlockTrade,
+    ComboBooks,
+    MarketData,
+    SessionManagement,
+    SubscriptionManagement,
+    Supporting,
+    Trading,
+    Wallet,
+)
 from .urls import WebsocketURI
 
 TData = TypeVar("TData")
@@ -36,6 +47,11 @@ class DeribitWS:
         self.session_management = SessionManagement(self._client, self._urls, self._mapper)
         self.supporting = Supporting(self._client, self._urls, self._mapper)
         self.subscription_management = SubscriptionManagement(self._client, self._urls, self._mapper)
+        self.market_data = MarketData(self._client, self._urls, self._mapper)
+        self.trading = Trading(self._client, self._urls, self._mapper)
+        self.combo_books = ComboBooks(self._client, self._urls, self._mapper)
+        self.block_trade = BlockTrade(self._client, self._urls, self._mapper)
+        self.wallet = Wallet(self._client, self._urls, self._mapper)
         self.account_management = AccountManagement(self._client, self._urls, self._mapper)
 
     async def sub_listening(self, channel: Channel[TData]) -> AsyncIterator[SubResponse[TData]]:
